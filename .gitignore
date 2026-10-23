@@ -35,3 +35,6 @@ desktop.ini
 # --- Lokale Claude-Einstellungen ---
 .claude/settings.local.json
 CLAUDE.local.md
+
+# --- Build ---
+dist/
