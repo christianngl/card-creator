@@ -131,7 +131,7 @@ Unter Windows mit der Bash von Claude Code Pfade mit Laufwerksbuchstaben und `/`
 |---|---|---|---|
 | `layout` | alle | ja | `normal`, `vollbild`, `gold`, `trainer` (Spielkarten) oder `sammel` (Sammelkarten) |
 | `name` | alle | ja | Text, Schriftgröße passt sich an (`namensgroesse` erzwingt sie) |
-| `bild` | alle | ja | `{datei, skalierung, x, y}`, Verschiebung in % |
+| `bild` | alle | ja | `{datei, skalierung, x, y}`: das Foto füllt das Fenster immer ganz, `x`/`y` (-100 bis 100) wählen den sichtbaren Ausschnitt (positiv = Foto nach rechts/unten), `skalierung` ab 1 zoomt hinein. Das Originalfoto bleibt unverändert in `bilder/` |
 | `bildquelle` | alle | ja | `foto` \| `ki` |
 | `seltenheit` | alle | wenn das Set Seltenheiten hat | Name einer Seltenheit |
 | `holo` | alle | nein | `true` = Regenbogen-Rahmen |

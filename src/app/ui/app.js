@@ -210,13 +210,24 @@ function zeigeEditor() {
   if ($('#arbeit').hidden) zeigeAnsicht('arbeit');
 }
 
+// Kartengrid in der Seitenleiste des Editors, mit Vorschaubildern
 async function ladeListe() {
-  const karten = await rufe('karten:liste', zustand.info.set.ordner);
-  $('#karten').innerHTML = karten.map((k) => `<li data-nr="${k.nummer}" class="${k.nummer === zustand.nr ? 'aktiv' : ''}">
-    <span class="nr">${String(k.nummer).padStart(3, '0')}</span><span class="name">${esc(k.name)}</span>
-    <span class="info">${k.entwurf ? 'Entwurf · ' : ''}v${k.version}${k.besitz ? ` · ${k.besitz}×` : ''}${k.gedruckt ? ' · gedruckt' : ''}</span></li>`).join('')
-    || '<li class="hinweis">Noch keine Karten.</li>';
-  $('#karten').querySelectorAll('li[data-nr]').forEach((li) => { li.onclick = () => waehleKarte(Number(li.dataset.nr)); });
+  const ordner = zustand.info.set.ordner;
+  const karten = await rufe('karten:liste', ordner);
+  $('#karten').innerHTML = karten.map((k) => `<div class="kachel karte${k.nummer === zustand.nr ? ' aktiv' : ''}" data-nr="${k.nummer}">
+      <div class="bild"><img alt=""></div>
+      <div class="text"><b>${String(k.nummer).padStart(3, '0')} ${esc(k.name || 'ohne Name')}</b>
+      <span>${k.entwurf ? '<em>Entwurf</em> · ' : ''}v${k.version}${k.besitz ? ` · ${k.besitz}×` : ''}</span></div>
+    </div>`).join('') || '<p class="hinweis">Noch keine Karten.</p>';
+  const auftraege = [];
+  $('#karten').querySelectorAll('.kachel[data-nr]').forEach((k) => {
+    const nr = Number(k.dataset.nr);
+    k.onclick = () => waehleKarte(nr);
+    auftraege.push({ ordner, nr, img: k.querySelector('img') });
+  });
+  // Die aktive Karte sichtbar halten
+  $('#karten').querySelector('.aktiv')?.scrollIntoView({ block: 'nearest' });
+  ladeVorschauBilder(auftraege);
 }
 
 function meldungAktiv(art, text, punkte, aktion) {
@@ -553,11 +564,30 @@ function bildRegler() {
 }
 
 // Überträgt die Reglerwerte sofort auf das Foto in der Vorschau
+// Gleiche Rechnung wie in der Vorlage (vorlage.js, ausschnittStil): Foto füllt das Fenster, x/y wählen den Ausschnitt
+const ausschnittPos = (v) => Math.max(0, Math.min(100, 50 - (Number(v) || 0) / 2));
+
 function zeigeBildausschnitt() {
   const doc = $('#vorschauFrame').contentDocument;
   const img = doc && doc.querySelector('img.photo');
   const r = bildRegler();
-  if (img && r.x) img.style.transform = `translate(${r.x.value}%,${r.y.value}%) scale(${r.skalierung.value})`;
+  if (!img || !r.x) return;
+  const px = ausschnittPos(r.x.value);
+  const py = ausschnittPos(r.y.value);
+  img.style.objectPosition = `${px}% ${py}%`;
+  img.style.transformOrigin = `${px}% ${py}%`;
+  img.style.transform = `scale(${Math.max(1, Number(r.skalierung.value))})`;
+}
+
+// Wie viele Pixel sich das Foto verschiebt, wenn der Ausschnitt von 0 % bis 100 % wandert (pro Achse)
+function verschiebeweg(img, rahmen, skalierung) {
+  const fw = rahmen.clientWidth;
+  const fh = rahmen.clientHeight;
+  const cover = Math.max(fw / (img.naturalWidth || fw), fh / (img.naturalHeight || fh));
+  const s = Math.max(1, Number(skalierung));
+  const ueberX = (img.naturalWidth || fw) * cover - fw;
+  const ueberY = (img.naturalHeight || fh) * cover - fh;
+  return { x: ueberX * s + fw * (s - 1), y: ueberY * s + fh * (s - 1) };
 }
 
 // Maus in der Vorschau: Foto ziehen zum Verschieben, Mausrad zum Zoomen
@@ -585,9 +615,12 @@ function verbindeVorschau() {
       doc.body.style.cursor = imRahmen(e) ? 'grab' : '';
       return;
     }
+    // Das Foto folgt der Maus 1:1, soweit es über das Fenster hinausreicht
     const r = bildRegler();
-    r.x.value = start.bx + ((e.clientX - start.x) / rahmen.clientWidth) * 100;
-    r.y.value = start.by + ((e.clientY - start.y) / rahmen.clientHeight) * 100;
+    const weg = verschiebeweg(img, rahmen, r.skalierung.value);
+    const begrenze = (v) => Math.max(-100, Math.min(100, v));
+    if (weg.x >= 1) r.x.value = begrenze(start.bx + (2 * (e.clientX - start.x) / weg.x) * 100);
+    if (weg.y >= 1) r.y.value = begrenze(start.by + (2 * (e.clientY - start.y) / weg.y) * 100);
     zeigeBildausschnitt();
   });
   const ende = () => { start = null; doc.body.style.cursor = ''; };

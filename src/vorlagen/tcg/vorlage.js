@@ -172,14 +172,20 @@ function energie(set, name) {
   return t ? `<span class="e ${slug(t.name)}">${esc(t.symbol)}</span>` : '';
 }
 
+// Bildausschnitt: Das Foto füllt das Fenster immer ganz (object-fit: cover), x/y (-100…100) wählen nur,
+// welcher Teil des vollen Fotos sichtbar ist, gezoomt wird um diesen Punkt. So entstehen nie leere Ränder.
+// Positiv = Foto nach rechts/unten geschoben. Die App nutzt dieselbe Rechnung (app.js, ausschnittStil).
+function ausschnittStil(skalierung, x, y) {
+  const s = Math.max(1, Number(skalierung) || 1);
+  const pos = (v) => Math.max(0, Math.min(100, 50 - (Number(v) || 0) / 2));
+  return `object-position:${pos(x)}% ${pos(y)}%;transform-origin:${pos(x)}% ${pos(y)}%;transform:scale(${s})`;
+}
+
 function foto(karte, bildUrl, extraKlasse = '') {
   const b = karte.bild || {};
   const url = b.datei ? bildUrl(b.datei) : null;
   if (!url) return '<div class="photo fehlt">Bild hierher ziehen</div>';
-  const s = Number(b.skalierung) || 1;
-  const x = Number(b.x) || 0;
-  const y = Number(b.y) || 0;
-  return `<img class="photo${extraKlasse}" src="${esc(url)}" style="transform:translate(${x}%,${y}%) scale(${s})" alt="">`;
+  return `<img class="photo${extraKlasse}" src="${esc(url)}" style="${ausschnittStil(b.skalierung, b.x, b.y)}" alt="">`;
 }
 
 // Zufallszahlen mit festem Startwert, damit eine Karte bei jedem Rendern gleich aussieht

@@ -39,3 +39,8 @@
 - **Typen pro Set** sind in der App bearbeitbar (Name, Symbol, Farbe, Hintergrundverlauf). Entfernte Typen, die Karten noch nutzen, meldet die App als Warnung, statt die Karten zu ändern.
 - **Startseite und Kartenübersicht als Grid** mit Vorschaubildern. Die Bilder werden im Hintergrund gerendert und pro Set in `.vorschau/` zwischengespeichert. Die Liste der Sets enthält alle bekannten Sets. „✕“ nimmt ein Set nur aus der Liste, der Ordner bleibt.
 - **Titelkarte** pro Set für die Startseite, ohne Auswahl zeigt die Kachel das Kürzel.
+
+## 2026-10-23 – Bildausschnitt ohne Ränder, Kartengrid im Editor
+
+- Der Bildausschnitt verschiebt nicht mehr das Bildelement, sondern wählt per `object-position` den sichtbaren Teil des vollen Fotos. Gezoomt wird um diesen Punkt. Dadurch entstehen beim Verschieben keine leeren Ränder mehr. In der Vorschau folgt das Foto der Maus 1:1 und stoppt am Fotorand.
+- Die Seitenleiste im Editor zeigt die Karten als Grid mit Vorschaubildern.
