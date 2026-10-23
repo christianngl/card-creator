@@ -1,9 +1,9 @@
 ---
 titel: +Neue Karte
-status: offen
+status: erledigt
 erstellt: 2026-10-23
 issue: 3
-abgeglichen: offen
+abgeglichen: erledigt
 ---
 
 Hey, wäre cool wenn "+Neue Karte" oben einen festen Platz hätte, sonst muss man immer scrollen, wenn man viele Karten angelegt hat.

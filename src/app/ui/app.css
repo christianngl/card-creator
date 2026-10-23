@@ -50,6 +50,10 @@ h3 { margin: 18px 0 6px; font-size: 13px; color: var(--leise); }
 #arbeit { flex: 1; display: grid; grid-template-columns: 290px minmax(380px, 1fr) auto; min-height: 0; }
 aside { border-right: 1px solid var(--linie); background: var(--flaeche); padding: 12px; overflow: auto; }
 aside .grid { margin-top: 12px; }
+/* "+ Neue Karte" bleibt beim Scrollen oben stehen */
+.werkzeugleiste { position: sticky; z-index: 2; display: flex; align-items: center; gap: 12px; }
+aside .werkzeugleiste { top: -12px; margin: -12px -12px 0; padding: 12px; background: var(--flaeche); border-bottom: 1px solid var(--linie); }
+#uebersicht .werkzeugleiste { top: -24px; margin: -24px -24px 18px; padding: 14px 24px; background: var(--grund); border-bottom: 1px solid var(--linie); }
 #editor { padding: 16px 20px; overflow: auto; display: flex; flex-direction: column; gap: 12px; }
 .kopfzeile { display: flex; align-items: center; gap: 12px; }
 .kopfzeile h2 { margin: 0; flex: 1; }

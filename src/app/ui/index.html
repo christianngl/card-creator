@@ -25,13 +25,17 @@
 </main>
 
 <main id="uebersicht" hidden>
+  <div class="werkzeugleiste">
+    <button id="btnNeueKarteUebersicht" class="primaer">+ Neue Karte</button>
+    <span id="kartenAnzahl" class="hinweis"></span>
+  </div>
   <div id="meldungUebersicht" class="meldung" hidden></div>
   <div class="grid karten" id="kartenGrid"></div>
 </main>
 
 <main id="arbeit" hidden>
   <aside>
-    <button id="btnNeueKarte" class="primaer breit">+ Neue Karte</button>
+    <div class="werkzeugleiste"><button id="btnNeueKarte" class="primaer breit">+ Neue Karte</button></div>
     <div id="karten" class="grid karten mini"></div>
   </aside>
   <section id="editor">

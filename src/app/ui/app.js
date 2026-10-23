@@ -195,8 +195,8 @@ async function zeigeUebersicht() {
       <div class="text"><b>${String(k.nummer).padStart(3, '0')} ${esc(k.name || 'ohne Name')}</b>
       <span>${k.entwurf ? '<em>Entwurf</em> · ' : ''}v${k.version}${k.besitz ? ` · ${k.besitz}× im Besitz` : ''}${k.gedruckt ? ' · gedruckt' : ''}</span></div>
     </div>`);
-  $('#kartenGrid').innerHTML = `<div class="kachel aktion karte" id="kachelNeueKarte"><span class="plus">+</span>Neue Karte</div>${kacheln.join('')}`;
-  $('#kachelNeueKarte').onclick = () => neueKarte();
+  $('#kartenGrid').innerHTML = kacheln.join('') || '<p class="hinweis">Noch keine Karten. Mit „+ Neue Karte“ legst du die erste an.</p>';
+  $('#kartenAnzahl').textContent = `${karten.length} ${karten.length === 1 ? 'Karte' : 'Karten'}`;
   const auftraege = [];
   $('#kartenGrid').querySelectorAll('.kachel[data-nr]').forEach((k) => {
     const nr = Number(k.dataset.nr);
@@ -249,6 +249,7 @@ $('#btnSchliessen').onclick = zeigeStart;
 $('#btnUebersicht').onclick = zeigeUebersicht;
 $('#btnOrdner').onclick = () => rufe('ordner:zeigen', zustand.info.set.ordner);
 $('#btnNeueKarte').onclick = () => neueKarte();
+$('#btnNeueKarteUebersicht').onclick = () => neueKarte();
 
 $('#btnAlleRendern').onclick = async () => {
   try {
