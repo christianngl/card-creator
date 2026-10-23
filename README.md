@@ -16,6 +16,17 @@ Eigene Kartensets erstellen, bearbeiten und verwalten:
 
 Private Fotos und die daraus entstandenen Karten werden nie veröffentlicht. Sie gehen nur an den privaten Kreis und als Druckauftrag an den Druckdienst. Fotos, Karten und Druckdateien liegen in `data/` und `results/` und werden nicht eingecheckt.
 
+## Herunterladen
+
+Fertige Windows-Versionen stehen unter [Releases](https://github.com/christianngl/card-creator/releases):
+
+- `CardCreator-Setup-<version>.exe` – Installer mit Startmenü- und Desktop-Verknüpfung
+- `CardCreator-<version>-portable.exe` – ohne Installation, einfach starten
+
+Die Dateien sind nicht signiert. Windows SmartScreen fragt deshalb beim ersten Start nach („Weitere Informationen“ → „Trotzdem ausführen“).
+
+Neue Version bauen: Version in `package.json` erhöhen, `npm run dist` (Ergebnis in `dist/`), dann als Release hochladen.
+
 ## Starten
 
 - Windows: `start.ps1` (oder die Desktop-Verknüpfung von pinx). Beim ersten Start werden die Abhängigkeiten installiert, dafür braucht es Node.js.

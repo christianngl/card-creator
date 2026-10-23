@@ -44,3 +44,8 @@
 
 - Der Bildausschnitt verschiebt nicht mehr das Bildelement, sondern wählt per `object-position` den sichtbaren Teil des vollen Fotos. Gezoomt wird um diesen Punkt. Dadurch entstehen beim Verschieben keine leeren Ränder mehr. In der Vorschau folgt das Foto der Maus 1:1 und stoppt am Fotorand.
 - Die Seitenleiste im Editor zeigt die Karten als Grid mit Vorschaubildern.
+
+## 2026-10-23 – Windows-Release
+
+- Gebaut mit electron-builder (`npm run dist`): NSIS-Installer und portable EXE, x64, nicht signiert. Vorlagen und Schrift liegen ausgepackt neben dem asar-Archiv (`asarUnpack`), damit Chromium sie per file:-URL lädt.
+- Releases liegen im privaten GitHub-Repo, herunterladen können sie nur Personen mit Zugriff.
