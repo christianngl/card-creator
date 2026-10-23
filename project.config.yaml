@@ -2,16 +2,16 @@
 projekt:
   name: "Card Creator"
   slug: card-creator
-  beschreibung: "Erstellung von custom Sammelkarten"
+  beschreibung: "Desktop-App zum Gestalten, Drucken und Verwalten eigener Sammel- und Spielkartensets"
   typ: allgemein
   struktur: standard
-  owner: "TODO: Owner festlegen"
+  owner: "Wildhunt Community"
   angelegt: 2026-10-23
-  tags: []
+  tags: [sammelkarten, kartendesign, druck, privat]
 
 ki:
   tools: [Claude Code]
   anweisungen: claude/CLAUDE.md
 
 daten:
-  quellen: [Text/Dokumente]
+  quellen: [Fotos, KI-Bilder, Vorlagen]

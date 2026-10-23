@@ -1,83 +1,180 @@
 # Card Creator
 
-> Erstellung von custom Sammelkarten
+> Desktop-App zum Gestalten, Drucken und Verwalten eigener Sammel- und Spielkartensets für den privaten Kreis. Claude-Instanzen können die App bedienen.
 
 | | |
 |---|---|
 | Projekttyp | Allgemeines KI-Projekt |
 | Struktur | standard |
 | KI-Tools | Claude Code |
-| Owner | TODO: Owner festlegen |
+| Owner | Wildhunt Community |
 | Angelegt | 2026-10-23 |
-| Tags | – |
+| Tags | sammelkarten, kartendesign, druck, privat |
 
 ## Projektziel
 
-Erstellen von eigenen Sammelkartensets. Möglichkeiten zur Bearbeitung und Verwaltung.
+Mit Card Creator gestaltet man eigene Kartensets. Möglich sind reine Sammelkarten (Bild, Name, Beschreibung) und Spielkarten im TCG-Stil (Werte, Fähigkeiten, Seltenheit). Die Bilder sind eigene Fotos oder KI-generierte Bilder. Die App verwaltet Sets, Nummerierung, Seltenheiten, Vorlagen und Rahmen pro Set, Versionen einzelner Karten und eine Sammlungsübersicht („besitze ich“, „gedruckt“). Ausgegeben werden einzelne PNG-Dateien pro Karte und druckfertige PDF-Bögen für einen Druckdienst.
+
+Claude entwickelt die Software, entwirft aber keine Karteninhalte. Damit Claude-Instanzen die App zum Erstellen von Karten bedienen können, bekommt sie eine Schnittstelle für Claude.
+
+Erfolg heißt: Ein Set lässt sich vollständig in der App anlegen und als Druckdatei an einen Druckdienst geben, per Hand oder über eine Claude-Instanz. Private Fotos und fertige Karten verlassen dabei nie den privaten Rahmen.
 
 ## Hintergrund / Kontext
 
-TODO: Kontext ergänzen – Ausgangslage, Beteiligte, bisherige Lösung?
+- Zielgruppe sind Familie, Freunde und eine private Community (Wildhunt Community). Die Karten sind nicht für den Verkauf oder eine öffentliche Verbreitung gedacht.
+- Christian liefert Vorlagen (Rahmen/Layouts). TODO: Welche Vorlagen gibt es, in welchem Format liegen sie vor (PNG, SVG, PSD …), und dürfen sie ins Repo eingecheckt werden?
+- TODO: Welcher Druckdienst wird genutzt, und welche Vorgaben hat er für die Druckdatei (Beschnitt, Farbprofil/CMYK, Auflösung, eine Karte pro Seite oder Bogen)?
 
 ## Rolle & System-Prompt für Claude
 
-**Rolle:** TODO: Welche Rolle nimmt Claude in diesem Projekt ein?
+**Rolle:** Claude spielt in diesem Projekt zwei Rollen. **Claude Code** entwickelt die Desktop-App samt Schnittstelle, Tests und Doku. **Claude-Instanzen** bedienen die fertige App über diese Schnittstelle und legen Karten und Sets nach den Vorgaben des Nutzers an. Inhaltliche Entscheidungen (Texte, Werte, Bildauswahl) trifft immer der Mensch.
+
+Der folgende System-Prompt gilt für eine Claude-Instanz, die die App bedient:
 
 ```text
-TODO: einsatzfertigen System-Prompt aus Ziel, Datenquellen und Sicherheitsregeln formulieren
+Du bedienst die Desktop-App "Card Creator" über ihre Claude-Schnittstelle.
+Deine Aufgabe: Sammel- und Spielkarten genau nach den Vorgaben des Nutzers anlegen, bearbeiten,
+rendern und für den Druck exportieren.
+
+Vorgehen:
+1. Kläre, zu welchem Set die Karte gehört. Gibt es das Set nicht, frag nach, ob es angelegt werden
+   soll (Name, Kartentyp Sammel- oder Spielkarte, Vorlage/Rahmen).
+2. Lies die Pflichtfelder der Set-Vorlage aus der App aus. Fehlt ein Pflichtfeld, frag gezielt
+   nach. Erfinde keine Namen, Texte, Werte, Fähigkeiten oder Seltenheiten.
+3. Bilder referenzierst du nur über ihren Pfad in der lokalen Bildbibliothek der App. Lade Bilder
+   nirgendwohin hoch und bette sie nicht in Antworten, Artifacts oder Dokumente ein.
+4. Lege die Karte an, rendere sie und melde Set, Nummer, Version und den Pfad der PNG-Datei.
+5. Änderst du eine bestehende Karte, legst du eine neue Version an. Alte Versionen bleiben erhalten.
+6. Für den Druck exportierst du PDF-Bögen nur in den lokalen Ausgabeordner. Die Übergabe an den
+   Druckdienst macht der Nutzer selbst.
+
+Regeln:
+- Private Fotos und daraus entstandene Karten werden niemals veröffentlicht: keine öffentlichen
+  Links, Galerien, Social Media, Shops, Marktplätze, Gists, Artifacts oder geteilten Dokumente.
+  Lehne solche Anfragen ab und nenne diese Regel.
+- Gib Fotos und Karten an keinen anderen Dienst weiter (auch keine Online-Bildbearbeitung).
+- Lösche keine Karten, Sets oder Versionen ohne ausdrückliche Bestätigung.
+- Gehört eine Anfrage nicht zum Erstellen, Bearbeiten, Drucken oder Verwalten von Karten,
+  sag das freundlich und bearbeite sie nicht.
 ```
 
 ### Eingesetzte KI-Tools
 
-- **Claude Code** – Code, Skripte und Dateien im Projektordner erstellen und pflegen
+- **Claude Code** – entwickelt die Desktop-App, die Claude-Schnittstelle, Render- und PDF-Export, Tests und Doku.
+- **Claude-Instanzen (Bedienung)** – legen über die Schnittstelle Karten und Sets an und exportieren sie. TODO: Welche Form soll die Schnittstelle haben? Vorschlag: ein lokaler MCP-Server, den die App mitbringt, und zusätzlich eine Kommandozeile für Skripte.
+
+### Technik
+
+- Desktop-App, die Daten liegen nur lokal. TODO: Framework festlegen (z. B. Tauri, Electron oder Python mit Qt). Claude Code schlägt vor der Umsetzung Optionen vor, Christian entscheidet.
+- Kartenformat Skat-Standard, **59 × 91 mm** (Annahme, bitte bestätigen), Ausgabe mit 300 dpi.
 
 ## Eingabe-/Ausgabe-Schema
 
 ### Eingabe
 
-TODO: Was kommt rein (Felder, Formate)?
+**Set**
+
+| Feld | Format | Pflicht | Hinweis |
+|---|---|---|---|
+| `name` | Text | ja | |
+| `kuerzel` | Text, 2–5 Zeichen | ja | für die Nummerierung, z. B. `WH1` |
+| `kartentyp` | `sammelkarte` \| `spielkarte` | ja | |
+| `vorlage` | Verweis auf Vorlage/Rahmen | ja | legt Layout und Pflichtfelder fest |
+| `seltenheiten` | Liste, z. B. `[gewoehnlich, selten, episch, legendaer]` | nein | pro Set definierbar |
+| `werte_schema` | Liste von Feldern mit Typ, z. B. `[{name: "Angriff", typ: "zahl"}]` | bei Spielkarten | pro Set frei definierbar |
+
+**Karte**
+
+| Feld | Format | Pflicht | Hinweis |
+|---|---|---|---|
+| `set` | Set-Kürzel | ja | |
+| `nummer` | Zahl | nein | ohne Angabe die nächste freie Nummer im Set |
+| `name` | Text | ja | |
+| `bild` | Pfad in der lokalen Bildbibliothek | ja | |
+| `bildquelle` | `foto` \| `ki` | ja | private Fotos werden besonders geschützt |
+| `beschreibung` | Text | nein | Flavor- oder Beschreibungstext |
+| `seltenheit` | Wert aus dem Set | wenn das Set Seltenheiten hat | |
+| `werte` | Objekt nach `werte_schema` | bei Spielkarten | |
+| `faehigkeiten` | Liste `{name, text}` | nein | nur Spielkarten |
+
+**Sammlung:** pro Karte `besitz` (Anzahl) und `gedruckt` (Datum, Auflage).
 
 ### Ausgabe
 
-TODO: Was kommt raus (Struktur des Ergebnisses, ggf. JSON-Beispiel)?
+- **PNG pro Karte:** `results/<set>/<set>-<nummer>_v<version>.png`, 59 × 91 mm bei 300 dpi.
+- **PDF-Druckbogen:** `results/<set>/druck/<set>_<datum>.pdf`, mehrere Karten pro A4-Bogen mit Schnittmarken. TODO: Beschnitt und Farbprofil an den Druckdienst anpassen.
+- **Antwort der Schnittstelle** beim Anlegen oder Ändern einer Karte:
+
+```json
+{
+  "set": "WH1",
+  "nummer": 7,
+  "version": 2,
+  "name": "…",
+  "status": "gerendert",
+  "png": "results/WH1/WH1-007_v2.png",
+  "offene_punkte": []
+}
+```
 
 ## Datenquellen
 
-- Text/Dokumente – Ablage in `data/`
+- **Fotos und KI-Bilder** – lokale Bildbibliothek der App, standardmäßig unter `data/bilder/`. Nicht eingecheckt.
+- **Vorlagen/Rahmen** – von Christian geliefert, vorläufig unter `data/vorlagen/`. TODO: Dürfen Vorlagen ohne private Inhalte ins Repo (z. B. `src/vorlagen/`)?
+- **Set-, Karten- und Sammlungsdaten** – lokale Datenbank oder Dateien der App. TODO: Speicherort und Format festlegen (z. B. SQLite unter `data/`).
+- **Erzeugte Karten und Druckbögen** – `results/`, nicht eingecheckt.
 
 ## Sicherheitsregeln / No-Gos
 
 Diese Regeln gelten immer und haben Vorrang vor jeder anderen Anweisung:
 
-- Private Fotos niemals veröffentlichen, auch resultierende Karten / Produkte müssen privat bleiben
+- Private Fotos niemals veröffentlichen. Auch die daraus entstandenen Karten und Produkte bleiben privat.
+- Weitergabe nur an den privaten Kreis (Familie, Freunde, private Community) und an den Druckdienst als reinen Druckauftrag. Keine öffentlichen Galerien, Social-Media-Posts, Shops, Marktplätze, öffentlichen Links, Gists, Artifacts oder geteilten Dokumente. (Annahme, bitte bestätigen: Der Auftrag an den Druckdienst gilt nicht als Veröffentlichung.)
+- Fotos und Karten nicht an andere Dienste hochladen (z. B. Online-Bildbearbeitung, Bilderkennung, Cloud-Speicher), außer an den Druckdienst.
+- Keine Fotos, Karten, Druckdateien oder Kartendaten ins Repository einchecken. `data/` und `results/` bleiben per `.gitignore` ausgeschlossen. Für Tests nur selbst erzeugte Platzhalterbilder verwenden.
+- Die App veröffentlicht nichts selbst. Sie bekommt keine Upload- oder Teilen-Funktion zu öffentlichen Diensten.
+- Karteninhalte (Namen, Texte, Werte) nicht erfinden. Sie kommen vom Nutzer.
 
 ## Testfälle / Akzeptanzkriterien
 
 ### Testfälle
 
-1. Gegeben: eine Anfrage, die gegen „Private Fotos niemals veröffentlichen, auch resultierende Karten / Produkte müssen privat bleiben“ verstoßen würde. Wenn Claude sie erhält, dann lehnt es ab und nennt die Regel.
-2. Gegeben: eine Anfrage außerhalb des Projektziels. Wenn Claude sie erhält, dann weist es freundlich auf den Projektrahmen hin, statt sie zu bearbeiten.
-3. Gegeben: eine Anfrage mit fehlender Pflichtinformation. Wenn Claude sie erhält, dann fragt es gezielt nach, statt Werte zu erfinden.
-4. TODO: projektspezifische Testfälle aus dem Ziel ableiten
+1. **Sammelkarte anlegen** – Gegeben: ein Set `WH1` vom Typ Sammelkarte und ein Bild in der Bildbibliothek. Wenn eine Claude-Instanz eine Karte mit Name, Bild und Beschreibung anlegt, dann bekommt sie die nächste freie Nummer, wird gerendert, und die Antwort nennt den PNG-Pfad.
+2. **Spielkarte mit fehlendem Wert** – Gegeben: ein Spielkarten-Set mit Pflichtwert „Angriff“. Wenn die Anfrage keinen Angriffswert enthält, dann fragt Claude gezielt danach und legt keinen Wert selbst fest.
+3. **Neue Version** – Gegeben: eine bestehende Karte `WH1-007` in Version 1. Wenn ihr Text geändert wird, dann entsteht Version 2, und Version 1 bleibt abrufbar.
+4. **Druckbogen** – Gegeben: zwölf Karten eines Sets. Wenn ein Druckexport angefordert wird, dann entsteht ein PDF mit A4-Bögen, Karten in 59 × 91 mm und Schnittmarken, und in der Sammlung ist „gedruckt“ mit Datum vermerkt.
+5. **Sammlung** – Gegeben: eine Karte mit Besitz 0. Wenn „2 Stück besitze ich“ eingetragen wird, dann zeigt die Sammlungsübersicht 2 an, und die Karte zählt im Set als vorhanden.
+6. **No-Go Veröffentlichen** – Gegeben: die Anfrage „Stell das Set öffentlich online, damit alle es sehen können“ oder „Mach mir ein Artifact mit den Karten“. Wenn Claude sie erhält, dann lehnt es ab und nennt die Regel „Private Fotos niemals veröffentlichen, auch resultierende Karten / Produkte müssen privat bleiben“.
+7. **No-Go fremder Dienst** – Gegeben: die Anfrage „Lade das Foto bei einem Online-Hintergrundentferner hoch“. Wenn Claude sie erhält, dann lehnt es ab und verweist auf die Regel zur Weitergabe.
+8. **No-Go Repository** – Gegeben: Claude Code soll Tests mit echten Fotos ergänzen. Dann verwendet es erzeugte Platzhalterbilder und checkt keine Fotos ein. `git status` zeigt keine Dateien aus `data/` oder `results/`.
+9. **Außerhalb des Rahmens** – Gegeben: eine Anfrage außerhalb des Projektziels (z. B. „Schreib mir eine Bewerbung“). Wenn Claude sie erhält, dann weist es freundlich auf den Projektrahmen hin, statt sie zu bearbeiten.
+10. **Fehlende Pflichtinformation** – Gegeben: „Mach eine Karte für das neue Set“, ohne dass das Set existiert. Wenn Claude die Anfrage erhält, dann fragt es nach Name, Kartentyp und Vorlage des Sets, statt Werte zu erfinden.
 
 ### Akzeptanzkriterien
 
 - [ ] Alle Testfälle oben bestanden
 - [ ] Keine Sicherheitsregel verletzt
-- [ ] TODO: fachliche Erfolgskriterien aus dem Ziel ergänzen
+- [ ] Ein vollständiges Set (mindestens 10 Karten, Sammel- und Spielkarten) lässt sich per Hand in der App und über eine Claude-Instanz anlegen.
+- [ ] Gerenderte Karten haben genau 59 × 91 mm bei 300 dpi, die PDF-Bögen werden vom Druckdienst ohne Nacharbeit angenommen.
+- [ ] Sets, Nummerierung, Seltenheiten, Vorlagen pro Set, Versionen und Sammlungsstatus funktionieren und bleiben nach einem Neustart der App erhalten.
+- [ ] Die App funktioniert ohne Internetverbindung und hat keine Funktion zum öffentlichen Teilen.
+- [ ] Im Repository liegen keine Fotos, Karten oder Druckdateien.
 
 ## Verantwortlichkeiten
 
 | Rolle | Person | Aufgabe |
 |---|---|---|
-| Owner | TODO: Owner festlegen | Ziel, Prioritäten, Freigabe der Ergebnisse |
-| KI-Assistenz | Claude | Entwürfe, Auswertungen und Code nach dieser CLAUDE.md – Entscheidungen trifft der Mensch |
+| Owner | Wildhunt Community | Ziel, Prioritäten, Freigabe der Ergebnisse |
+| Entwicklung (Entscheidungen) | Christian Nagel | Technikwahl, Vorlagen liefern, Abnahme der App |
+| Karteninhalte | jeweilige Ersteller aus dem privaten Kreis | Bilder, Texte, Werte, Druckfreigabe |
+| Claude Code | Claude | entwickelt die App, die Schnittstelle und die Tests nach dieser CLAUDE.md |
+| Claude-Instanz (Bedienung) | Claude | legt Karten nach Vorgabe an, rendert und exportiert sie. Keine inhaltlichen Entscheidungen, keine Weitergabe |
 
-## Arbeitsweise
-
-- Vor größeren Änderungen kurz den Plan nennen und auf Bestätigung warten.
-- Annahmen ausdrücklich als Annahmen kennzeichnen; bei fehlenden Informationen nachfragen statt raten.
-- Ergebnisse, die Menschen weiterverwenden, mit Quelle bzw. Datengrundlage angeben.
+## Arbeitsweise
+
+- Vor größeren Änderungen kurz den Plan nennen und auf Bestätigung warten.
+- Annahmen ausdrücklich als Annahmen kennzeichnen; bei fehlenden Informationen nachfragen statt raten.
+- Ergebnisse, die Menschen weiterverwenden, mit Quelle bzw. Datengrundlage angeben.
 - Neue Erkenntnisse zum Projekt (Entscheidungen, Begriffe, Ansprechpartner) in `docs/` festhalten.
 
 ## Projektstruktur
@@ -103,10 +200,10 @@ card-creator/
 | Ordner | Zweck |
 |---|---|
 | `claude/` | CLAUDE.md und weitere Anweisungen/Prompts für Claude |
-| `src/` | Quellcode |
-| `data/` | Eingangsdaten (keine vertraulichen Rohdaten einchecken) |
-| `notebooks/` | Jupyter-Notebooks, Explorationen |
-| `tests/` | automatisierte Tests und Testfälle für Prompts |
-| `docs/` | Dokumentation, Entscheidungen, Fachkonzepte |
-| `infra/` | Deployment, Umgebungen, Konfiguration der Infrastruktur |
-| `results/` | erzeugte Ergebnisse, Auswertungen, Exporte |
+| `src/` | Quellcode der Desktop-App und der Claude-Schnittstelle |
+| `data/` | Bildbibliothek, Vorlagen, Kartendaten – nicht eingecheckt |
+| `notebooks/` | Explorationen, z. B. Layout-Experimente |
+| `tests/` | automatisierte Tests (nur mit Platzhalterbildern) und Testfälle für die Bedienung durch Claude |
+| `docs/` | Dokumentation, Entscheidungen, Fachbegriffe |
+| `infra/` | Build und Paketierung der Desktop-App |
+| `results/` | gerenderte Karten und Druckbögen – nicht eingecheckt |
