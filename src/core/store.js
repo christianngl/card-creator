@@ -243,6 +243,23 @@ function aendereKarte(ordner, nummer, aenderungen, { entwurf = false, ersetzen =
   return karte;
 }
 
+// Überträgt den Stil (Layout innerhalb der Familie, Effekt, Format, Holo, Goldton) der aktuellen Version von quelle
+// auf andere Karten. Jede geänderte Karte bekommt eine neue Version, Karten ohne Unterschied bleiben unverändert.
+function uebertrageStil(ordner, quelle, ziele) {
+  const set = ladeSet(ordner);
+  const v = vorlage(set.vorlage);
+  const vorbild = ladeKarte(set.ordner, quelle);
+  return ziele.filter((n) => n !== Number(quelle)).map((n) => {
+    const alt = ladeKarte(set.ordner, n);
+    const aenderungen = v.stilVon(vorbild, alt);
+    const gleich = Object.entries(aenderungen).every(([k, w]) => JSON.stringify(w) === JSON.stringify(alt[k]));
+    if (gleich) return { nummer: n, version: alt.version, geaendert: false };
+    // Der Stil ändert keine Inhalte. War die Karte schon ein Entwurf, bleibt sie es.
+    const k = aendereKarte(set.ordner, n, aenderungen, { entwurf: true });
+    return { nummer: n, version: k.version, geaendert: true, entwurf: !!k.entwurf };
+  });
+}
+
 function ladeSammlung(ordner) {
   const datei = path.join(ordner, 'sammlung.json');
   return fs.existsSync(datei) ? leseJson(datei) : {};
@@ -299,6 +316,7 @@ module.exports = {
   nummern,
   neueKarte,
   aendereKarte,
+  uebertrageStil,
   importiereBild,
   ladeSammlung,
   setzeBesitz,

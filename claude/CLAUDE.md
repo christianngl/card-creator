@@ -98,6 +98,7 @@ node src/cli/index.js liste --set <pfad>
 node src/cli/index.js karte neu --set <pfad> --json <json|datei> [--entwurf]
 node src/cli/index.js karte aendern --set <pfad> --nr 7 --json '{"kp":70}' [--entwurf]
 node src/cli/index.js karte zeigen|versionen --set <pfad> --nr 7 [--version 1]
+node src/cli/index.js karte stil --set <pfad> --von 3 --nr 4-10      Stil (Layout derselben Art, Effekt, Format, Holo, Goldton) übertragen, je Karte neue Version
 node src/cli/index.js rendern --set <pfad> [--nr 1-12] [--ohne-beschnitt]
 node src/cli/index.js druck --set <pfad> [--nr …] [--modus bogen|einzeln] [--ohne-rueckseiten] [--auflage 2] [--mit-entwuerfen]
 node src/cli/index.js sammlung --set <pfad> [--nr 7 --besitz 2]

@@ -183,3 +183,29 @@ test('Kommentar wird gespeichert, erscheint aber nicht auf der Karte', () => {
   assert.equal(store.listeKarten(ordner)[0].kommentar, 'Später Foto vom Sommer nehmen');
   assert.ok(!karteSeite(store.ladeSet(ordner), k).includes('Später Foto'));
 });
+
+test('Stil übertragen: Layout derselben Art, Effekt und Format, Inhalte bleiben', () => {
+  const { ordner, bild } = neuesSet();
+  store.neueKarte(ordner, spielkarte(bild, { layout: 'gold', goldton: false, folie: { art: 'sterne', bereich: 'karte', staerke: 0.5 }, format: { breite: 59, hoehe: 91 } }));
+  store.neueKarte(ordner, spielkarte(bild, { name: 'Ziel', folie: { art: 'glitzer', bereich: 'bild', staerke: 1 } }));
+  store.neueKarte(ordner, { layout: 'trainer', name: 'Rat', bild: { datei: bild }, bildquelle: 'foto', seltenheit: 'selten', effekt: 'Ziehe 2 Karten.' });
+  const r = store.uebertrageStil(ordner, 1, [1, 2, 3]);
+  assert.deepEqual(r.map((x) => [x.nummer, x.version, x.geaendert]), [[2, 2, true], [3, 2, true]]);
+  const ziel = store.ladeKarte(ordner, 2);
+  assert.equal(ziel.layout, 'gold');
+  assert.equal(ziel.name, 'Ziel');
+  assert.equal(ziel.goldton, false);
+  assert.deepEqual(ziel.folie, { art: 'sterne', bereich: 'karte', staerke: 0.5 });
+  assert.deepEqual(ziel.format, { breite: 59, hoehe: 91 });
+  // Trainer behält sein Layout
+  assert.equal(store.ladeKarte(ordner, 3).layout, 'trainer');
+  assert.equal(store.ladeKarte(ordner, 3).entwurf, undefined);
+  // Version 1 bleibt erhalten, zweites Übertragen ändert nichts mehr
+  assert.equal(store.ladeKarte(ordner, 2, 1).layout, 'normal');
+  assert.deepEqual(store.uebertrageStil(ordner, 1, [2]), [{ nummer: 2, version: 2, geaendert: false }]);
+  // Ohne Effekt in der Quelle verschwindet der Effekt beim Ziel
+  store.neueKarte(ordner, spielkarte(bild));
+  store.uebertrageStil(ordner, 4, [2]);
+  assert.equal(store.ladeKarte(ordner, 2).folie, undefined);
+  assert.equal(store.ladeKarte(ordner, 2).layout, 'normal');
+});

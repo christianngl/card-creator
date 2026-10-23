@@ -23,6 +23,8 @@ const HILFE = `Card Creator – Kommandozeile (Ausgabe immer JSON)
                                               --entwurf speichert auch mit fehlenden Angaben (nur auf Wunsch des Nutzers)
   karte zeigen --set <pfad> --nr <n> [--version <v>]
   karte versionen --set <pfad> --nr <n>
+  karte stil --set <pfad> --von <n> --nr 4-10   überträgt den Stil (Layout derselben Art, Effekt, Format, Holo, Goldton),
+                                              jede geänderte Karte bekommt eine neue Version
   rendern --set <pfad> [--nr 7|1-12|1,3,5] [--ohne-beschnitt]      PNG nach <set>/export/png/
   druck --set <pfad> [--nr …] [--modus bogen|einzeln] [--ohne-rueckseiten] [--auflage <n>] [--mit-entwuerfen]
                                               PDF nach <set>/export/druck/, vermerkt den Druck in der Sammlung
@@ -143,6 +145,12 @@ async function main(argv) {
       brauche(opt, 'set', 'nr', 'json');
       const k = store.aendereKarte(opt.set, zahl(opt.nr, 'nr'), json(opt.json), { entwurf: !!opt.entwurf });
       return ausgabe({ ok: true, nummer: k.nummer, version: k.version, name: k.name, status: k.entwurf ? 'entwurf' : 'gespeichert', offene_punkte: k.offene_punkte || [] });
+    }
+    case 'karte stil': {
+      brauche(opt, 'set', 'von', 'nr');
+      const ordner = path.resolve(opt.set);
+      const karten = store.uebertrageStil(ordner, zahl(opt.von, 'von'), store.waehleNummern(ordner, opt.nr));
+      return ausgabe({ ok: true, von: zahl(opt.von, 'von'), karten });
     }
     case 'karte zeigen':
       brauche(opt, 'set', 'nr');

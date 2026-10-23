@@ -83,3 +83,13 @@ test('Karten verschiedener Formate: PNG-Größe und getrennte Druckbögen', () =
   assert.equal(d.seiten, 4);
   assert.equal(cli('druck', '--set', ordner, '--nr', `1,${r.nummer}`, '--modus', 'einzeln').seiten, 4);
 });
+
+test('Stil über die Kommandozeile übertragen', () => {
+  const r = cli('karte', 'neu', '--set', ordner, '--json', JSON.stringify(spielkarte(bild, { layout: 'vollbild', folie: { art: 'kosmos', bereich: 'bild', staerke: 0.4 } })));
+  const s = cli('karte', 'stil', '--set', ordner, '--von', String(r.nummer), '--nr', '1');
+  assert.equal(s.ok, true);
+  assert.equal(s.karten[0].geaendert, true);
+  const k = cli('karte', 'zeigen', '--set', ordner, '--nr', '1').karte;
+  assert.equal(k.layout, 'vollbild');
+  assert.equal(k.folie.art, 'kosmos');
+});

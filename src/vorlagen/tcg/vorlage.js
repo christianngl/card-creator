@@ -43,6 +43,20 @@ const FOLIEN = {
   glanz: 'Glanz (Lichtstreifen)',
 };
 
+// Stil = Gestaltung ohne Inhalte. "Stil übertragen" kopiert diese Felder, das Layout nur innerhalb einer Familie,
+// weil sonst Pflichtfelder wegfallen oder fehlen würden (z. B. normal -> trainer).
+const STIL_FELDER = ['folie', 'format', 'holo', 'goldton'];
+const LAYOUT_FAMILIEN = [['normal', 'vollbild', 'gold'], ['trainer'], ['sammel']];
+
+// Änderungen, die den Stil von quelle auf ziel übertragen. Fehlt ein Feld in der Quelle, wird es beim Ziel entfernt (undefined).
+function stilVon(quelle, ziel) {
+  const aenderungen = {};
+  for (const f of STIL_FELDER) aenderungen[f] = quelle[f] === undefined ? undefined : JSON.parse(JSON.stringify(quelle[f]));
+  const familie = LAYOUT_FAMILIEN.find((l) => l.includes(quelle.layout));
+  if (familie && familie.includes(ziel.layout)) aenderungen.layout = quelle.layout;
+  return aenderungen;
+}
+
 // Feldbeschreibung für "card-creator vorlage zeigen" und die Oberfläche
 const FELDER = {
   alle: {
@@ -336,6 +350,8 @@ module.exports = {
   felder: FELDER,
   standard: { typen: STANDARD_TYPEN, seltenheiten: STANDARD_SELTENHEITEN },
   pruefe,
+  stilFelder: STIL_FELDER,
+  stilVon,
   typCss,
   karteHtml,
   rueckseiteHtml,

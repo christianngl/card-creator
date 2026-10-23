@@ -48,6 +48,7 @@
     <div class="aktionen leiste">
       <button id="btnSpeichern" class="primaer">Speichern</button>
       <button id="btnPng" hidden>Als PNG rendern</button>
+      <button id="btnStil" hidden title="Layout, Effekt, Format und Holo dieser Karte auf andere Karten übertragen">Stil übertragen …</button>
       <label id="besitzFeld" hidden>Besitz <input id="besitz" type="number" min="0" value="0"></label>
     </div>
   </section>
@@ -91,6 +92,17 @@
     <label>Auflage <input name="auflage" type="number" min="1" value="1"></label>
     <p class="hinweis">Karten unterschiedlicher Formate kommen auf getrennte Bögen.</p>
     <div class="aktionen"><button value="abbrechen">Abbrechen</button><button value="ok" class="primaer">PDF erzeugen</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlgStil">
+  <form method="dialog">
+    <h2>Stil übertragen</h2>
+    <p class="hinweis" id="stilQuelle"></p>
+    <label class="zeile"><input type="checkbox" id="stilAlle"> alle Karten</label>
+    <div id="stilZiele" class="auswahlliste"></div>
+    <p class="hinweis">Jede geänderte Karte bekommt eine neue Version. Texte, Werte und Bilder bleiben unverändert.</p>
+    <div class="aktionen"><button value="abbrechen">Abbrechen</button><button value="ok" class="primaer">Übertragen</button></div>
   </form>
 </dialog>
 

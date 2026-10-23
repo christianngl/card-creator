@@ -360,6 +360,7 @@ function neueKarte() {
   $('#editorTitel').textContent = 'Neue Karte';
   $('#version').hidden = true;
   $('#btnPng').hidden = true;
+  $('#btnStil').hidden = true;
   $('#besitzFeld').hidden = true;
   keineMeldung();
   zeigeEditor();
@@ -377,6 +378,7 @@ async function waehleKarte(nr, version) {
     $('#version').hidden = false;
     $('#version').innerHTML = r.versionen.slice().reverse().map((v) => `<option value="${v}" ${v === r.karte.version ? 'selected' : ''}>Version ${v}${v === aktuell ? ' (aktuell)' : ''}</option>`).join('');
     $('#btnPng').hidden = false;
+    $('#btnStil').hidden = false;
     $('#besitzFeld').hidden = false;
     $('#besitz').value = r.sammlung.besitz || 0;
     keineMeldung();
@@ -401,6 +403,44 @@ $('#btnPng').onclick = async () => {
   try {
     const [r] = await mitWarten(() => rufe('export:png', zustand.info.set.ordner, { nr: String(zustand.nr) }));
     meldung('ok', `Gespeichert: ${r.png}`, [], { text: 'Datei zeigen', fn: () => rufe('datei:zeigen', r.png) });
+  } catch (e) { fehler(e); }
+};
+
+// ---------- Stil übertragen ----------
+
+// Kurzbeschreibung des Stils einer Karte für den Dialog
+function stilText(k) {
+  const v = zustand.info.vorlage;
+  const teile = [v.layouts[k.layout]?.titel || k.layout];
+  teile.push(k.folie?.art ? `Effekt ${v.folien[k.folie.art] || k.folie.art}` : 'kein Effekt');
+  teile.push(k.format ? `Format ${k.format.hoehe} × ${k.format.breite} mm` : 'Set-Standardformat');
+  if (k.holo) teile.push('Holo-Rahmen');
+  if (k.layout === 'gold') teile.push(k.goldton !== false ? 'Foto in Gold' : 'Foto in Farbe');
+  return teile.join(', ');
+}
+
+$('#btnStil').onclick = async () => {
+  try {
+    const ordner = zustand.info.set.ordner;
+    const [{ karte }, karten] = await Promise.all([rufe('karte:laden', ordner, zustand.nr), rufe('karten:liste', ordner)]);
+    $('#stilQuelle').textContent = `Von Karte ${String(zustand.nr).padStart(3, '0')} (gespeicherte aktuelle Version): ${stilText(karte)}. Das Layout wird nur auf Karten derselben Art übertragen (Spielkarten mit Foto, Trainer, Sammelkarten).`;
+    $('#stilZiele').innerHTML = karten.filter((k) => k.nummer !== zustand.nr).map((k) => `<label class="zeile"><input type="checkbox" value="${k.nummer}"> ${String(k.nummer).padStart(3, '0')} ${esc(k.name || 'ohne Name')}</label>`).join('')
+      || '<p class="hinweis">Es gibt noch keine anderen Karten.</p>';
+    $('#stilAlle').checked = false;
+    $('#dlgStil').showModal();
+  } catch (e) { fehler(e); }
+};
+$('#stilAlle').onchange = () => $('#stilZiele').querySelectorAll('input').forEach((c) => { c.checked = $('#stilAlle').checked; });
+$('#dlgStil').onclose = async () => {
+  if ($('#dlgStil').returnValue !== 'ok') return;
+  const ziele = [...$('#stilZiele').querySelectorAll('input:checked')].map((c) => Number(c.value));
+  if (!ziele.length) return;
+  try {
+    const r = await rufe('karte:stil', zustand.info.set.ordner, zustand.nr, ziele);
+    const geaendert = r.filter((x) => x.geaendert);
+    meldung('ok', `Stil auf ${geaendert.length} ${geaendert.length === 1 ? 'Karte' : 'Karten'} übertragen${r.length > geaendert.length ? `, ${r.length - geaendert.length} hatten ihn schon` : ''}.`,
+      geaendert.map((x) => `Karte ${String(x.nummer).padStart(3, '0')} → Version ${x.version}`));
+    ladeListe();
   } catch (e) { fehler(e); }
 };
 
