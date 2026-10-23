@@ -42,7 +42,6 @@ const aufbau = (layout) => (LAYOUTS[layout] || {}).aufbau;
 const FOLIEN = {
   glitzer: 'Glitzer (feine Funken)',
   sterne: 'Sterne (Sternchen mit Leuchten)',
-  strahlen: 'Strahlen (Sonnenstrahlen)',
   kosmos: 'Kosmos (schimmernde Kreise)',
   regenbogen: 'Regenbogen-Folie',
   glanz: 'Glanz (Lichtstreifen)',
@@ -59,6 +58,9 @@ function stilVon(quelle, ziel) {
   if (aufbau(quelle.layout) && aufbau(quelle.layout) === aufbau(ziel.layout)) aenderungen.layout = quelle.layout;
   return aenderungen;
 }
+
+// Nicht mehr angebotene Effekte: alte Karten zeigen sie nicht mehr, beim nächsten Speichern fallen sie weg
+const ENTFERNTE_FOLIEN = ['strahlen'];
 
 // Feldbeschreibung für "card-creator vorlage zeigen" und die Oberfläche
 const FELDER = {
@@ -354,6 +356,7 @@ module.exports = {
   formatVon,
   layouts: LAYOUTS,
   folien: FOLIEN,
+  entfernteFolien: ENTFERNTE_FOLIEN,
   felder: FELDER,
   standard: { typen: STANDARD_TYPEN, seltenheiten: STANDARD_SELTENHEITEN },
   pruefe,

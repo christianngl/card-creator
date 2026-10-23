@@ -123,6 +123,5 @@
 .card>.fx{z-index:6}
 .fx-glitzer,.fx-sterne{mix-blend-mode:screen}
 .fx-kosmos{mix-blend-mode:hard-light}
-.fx-strahlen{mix-blend-mode:overlay;background:radial-gradient(circle at 50% 38%,rgba(255,255,255,.55),rgba(255,255,255,0) 55%),repeating-conic-gradient(from 0deg at 50% 38%,rgba(255,255,255,.6) 0deg 3deg,rgba(255,240,190,.12) 3deg 8deg,rgba(255,255,255,0) 8deg 15deg)}
 .fx-regenbogen{mix-blend-mode:soft-light;background:repeating-linear-gradient(115deg,#ff7878 0,#ffdc64 40px,#8cff8c 80px,#6ec8ff 120px,#be82ff 160px,#ff78d2 200px,#ff7878 240px)}
 .fx-glanz{mix-blend-mode:overlay;background:linear-gradient(120deg,transparent 18%,rgba(255,255,255,.9) 30%,transparent 38%,transparent 56%,rgba(255,255,255,.75) 63%,transparent 70%)}

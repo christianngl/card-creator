@@ -197,6 +197,7 @@ function pruefeKarte(set, karte, entwurf) {
   delete karte.entwurf;
   delete karte.offene_punkte;
   const v = vorlage(set.vorlage);
+  if (karte.folie && (v.entfernteFolien || []).includes(karte.folie.art)) delete karte.folie;
   if (entwurf && !v.layouts[karte.layout]) karte.layout = Object.keys(v.layouts).find((l) => v.layouts[l].kartentyp === set.kartentyp);
   const offen = v.pruefe(set, karte);
   if (!offen.length) return;

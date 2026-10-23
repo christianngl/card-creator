@@ -250,3 +250,17 @@ test('Regenbogenkarte: eigenes Layout mit Regenbogenglanz, auch für Sammelkarte
   store.uebertrageStil(ordner, 1, [2]);
   assert.equal(store.ladeKarte(ordner, 2).layout, 'regenbogen');
 });
+
+test('Effekt Strahlen gibt es nicht mehr, alte Karten verlieren ihn beim Speichern', () => {
+  const { ordner, bild } = neuesSet();
+  const { vorlage } = require('../src/vorlagen');
+  assert.equal(vorlage('tcg').folien.strahlen, undefined);
+  const k = store.neueKarte(ordner, spielkarte(bild));
+  // Karte aus einer älteren Version der App mit dem Effekt Strahlen
+  const datei = path.join(ordner, 'karten', '001', 'v001.json');
+  fs.writeFileSync(datei, JSON.stringify({ ...k, folie: { art: 'strahlen', bereich: 'bild', staerke: 0.7 } }));
+  assert.ok(!karteSeite(store.ladeSet(ordner), store.ladeKarte(ordner, 1)).includes('fx-strahlen'));
+  const neu = store.aendereKarte(ordner, 1, { kp: 70 });
+  assert.equal(neu.folie, undefined);
+  assert.equal(neu.entwurf, undefined);
+});
