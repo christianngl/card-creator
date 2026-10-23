@@ -431,6 +431,40 @@ const auswahl = (name, titel, optionen, { leer = false } = {}) => {
   return `<label>${titel}<select data-feld="${name}">${opts.join('')}</select></label>`;
 };
 
+// Energiekosten: pro Typ des Sets ein Zähler (ein Typ kann mehrfach kosten), der Wert steht im versteckten Feld
+function kostenAuswahl(i, kosten, typen) {
+  const anzahl = (name) => kosten.filter((k) => k === name).length;
+  const fremd = kosten.filter((k) => !typen.some((t) => t.name === k));
+  const knoepfe = typen.map((t) => `<span class="kostentyp ${anzahl(t.name) ? 'aktiv' : ''}" data-kostentyp="${esc(t.name)}">
+      <button type="button" data-kosten="-1" title="${esc(t.name)} entfernen">−</button>
+      <span>${esc(t.symbol)} ${esc(t.name)} <b>${anzahl(t.name) || ''}</b></span>
+      <button type="button" data-kosten="1" title="${esc(t.name)} hinzufügen">+</button>
+    </span>`).join('');
+  return `<div class="ganz kostenfeld">Energiekosten
+    <input type="hidden" data-atk="${i}" data-teil="kosten" value="${esc(kosten.join(', '))}">
+    <div class="kostentypen">${knoepfe || '<span class="hinweis">Im Set sind noch keine Typen angelegt.</span>'}</div>
+    ${fremd.length ? `<span class="hinweis">Nicht im Set: ${esc(fremd.join(', '))}</span>` : ''}
+  </div>`;
+}
+
+function aendereKosten(knopf) {
+  const chip = knopf.closest('[data-kostentyp]');
+  const name = chip.dataset.kostentyp;
+  const eingabe = knopf.closest('.kostenfeld').querySelector('[data-teil="kosten"]');
+  const kosten = eingabe.value.split(',').map((x) => x.trim()).filter(Boolean);
+  if (Number(knopf.dataset.kosten) > 0) kosten.push(name);
+  else if (kosten.includes(name)) kosten.splice(kosten.lastIndexOf(name), 1);
+  // Reihenfolge wie die Typen im Set, unbekannte Typen hinten
+  const reihe = (zustand.info.set.typen || []).map((t) => t.name);
+  const rang = (x) => (reihe.includes(x) ? reihe.indexOf(x) : reihe.length);
+  kosten.sort((x, y) => rang(x) - rang(y));
+  eingabe.value = kosten.join(', ');
+  const zahl = kosten.filter((x) => x === name).length;
+  chip.classList.toggle('aktiv', zahl > 0);
+  chip.querySelector('b').textContent = zahl || '';
+  eingabe.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
 function baueFormular() {
   const k = zustand.karte;
   const s = zustand.info.set;
@@ -470,7 +504,7 @@ function baueFormular() {
       teile.push(`<fieldset><legend>Attacke ${i + 1}${i ? ' (optional)' : ''}</legend>
         <label>Name<input data-atk="${i}" data-teil="name" value="${esc(a.name)}"></label>
         <label>Schaden<input data-atk="${i}" data-teil="schaden" value="${esc(a.schaden)}"></label>
-        <label class="ganz">Energiekosten<input data-atk="${i}" data-teil="kosten" value="${esc((a.kosten || []).join(', '))}" placeholder="Typen mit Komma, z. B. Feuer, Farblos"></label>
+        ${kostenAuswahl(i, a.kosten || [], s.typen || [])}
         <label class="ganz">Text<textarea data-atk="${i}" data-teil="text">${esc(a.text)}</textarea></label>
       </fieldset>`);
     });
@@ -497,6 +531,7 @@ function baueFormular() {
       baueFormular();
     } catch (e) { fehler(e); }
   };
+  form.onclick = (e) => { const knopf = e.target.closest('[data-kosten]'); if (knopf) aendereKosten(knopf); };
   form.oninput = (e) => {
     if (e.target.dataset.bild !== undefined) return zeigeBildausschnitt();
     clearTimeout(zustand.timer);
