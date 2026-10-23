@@ -56,6 +56,7 @@ const FELDER = {
     format: '{ breite, hoehe } in mm, optional – sonst Standardformat des Sets; Beschnitt kommt vom Set',
     folie: `{ art: ${Object.keys(FOLIEN).join(' | ')}, bereich: bild | karte, staerke: 0.1–1 } – Effekt über Bild oder Karte, optional`,
     flavor: 'Text, optional',
+    kommentar: 'Text, optional – Notiz für spätere Bearbeitungen und Ideen, erscheint nicht auf der Karte',
   },
   normal: {
     stufe: 'Text, z. B. Basis, Phase 1 (Pflicht)',

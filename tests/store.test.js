@@ -175,3 +175,11 @@ test('Goldkarte und Folien-Effekte erscheinen im Markup', () => {
   assert.equal(html, karteSeite(store.ladeSet(ordner), gold));
   assert.throws(() => store.neueKarte(ordner, spielkarte(bild, { folie: { art: 'feuerwerk' } })), (e) => e.offene_punkte.some((p) => p.startsWith('folie.art')));
 });
+
+test('Kommentar wird gespeichert, erscheint aber nicht auf der Karte', () => {
+  const { ordner, bild } = neuesSet();
+  const k = store.neueKarte(ordner, spielkarte(bild, { kommentar: 'Später Foto vom Sommer nehmen' }));
+  assert.equal(store.ladeKarte(ordner, 1).kommentar, 'Später Foto vom Sommer nehmen');
+  assert.equal(store.listeKarten(ordner)[0].kommentar, 'Später Foto vom Sommer nehmen');
+  assert.ok(!karteSeite(store.ladeSet(ordner), k).includes('Später Foto'));
+});

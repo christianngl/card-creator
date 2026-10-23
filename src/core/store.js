@@ -173,7 +173,7 @@ function listeKarten(ordner) {
   return nummern(ordner).map((n) => {
     const k = ladeKarte(ordner, n);
     const s = sammlung[n] || {};
-    return { nummer: n, version: k.version, name: k.name, layout: k.layout, typ: k.typ || null, seltenheit: k.seltenheit || null, entwurf: !!k.entwurf, besitz: s.besitz || 0, gedruckt: (s.gedruckt || []).length };
+    return { nummer: n, version: k.version, name: k.name, layout: k.layout, typ: k.typ || null, seltenheit: k.seltenheit || null, entwurf: !!k.entwurf, kommentar: k.kommentar || null, besitz: s.besitz || 0, gedruckt: (s.gedruckt || []).length };
   });
 }
 

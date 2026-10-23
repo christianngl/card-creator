@@ -185,13 +185,16 @@ async function zeigeSet(info) {
   await zeigeUebersicht();
 }
 
+// Sprechblase auf der Kachel, wenn die Karte einen Kommentar hat (Text als Tooltip)
+const kommentarMarke = (k) => (k.kommentar ? `<span class="kommentar" title="${esc(k.kommentar)}">💬</span>` : '');
+
 // Kartenübersicht als Grid mit Vorschaubildern der aktuellen Versionen
 async function zeigeUebersicht() {
   zeigeAnsicht('uebersicht');
   const ordner = zustand.info.set.ordner;
   const karten = await rufe('karten:liste', ordner);
   const kacheln = karten.map((k) => `<div class="kachel karte" data-nr="${k.nummer}">
-      <div class="bild"><img alt=""></div>
+      <div class="bild"><img alt="">${kommentarMarke(k)}</div>
       <div class="text"><b>${String(k.nummer).padStart(3, '0')} ${esc(k.name || 'ohne Name')}</b>
       <span>${k.entwurf ? '<em>Entwurf</em> · ' : ''}v${k.version}${k.besitz ? ` · ${k.besitz}× im Besitz` : ''}${k.gedruckt ? ' · gedruckt' : ''}</span></div>
     </div>`);
@@ -215,7 +218,7 @@ async function ladeListe() {
   const ordner = zustand.info.set.ordner;
   const karten = await rufe('karten:liste', ordner);
   $('#karten').innerHTML = karten.map((k) => `<div class="kachel karte${k.nummer === zustand.nr ? ' aktiv' : ''}" data-nr="${k.nummer}">
-      <div class="bild"><img alt=""></div>
+      <div class="bild"><img alt="">${kommentarMarke(k)}</div>
       <div class="text"><b>${String(k.nummer).padStart(3, '0')} ${esc(k.name || 'ohne Name')}</b>
       <span>${k.entwurf ? '<em>Entwurf</em> · ' : ''}v${k.version}${k.besitz ? ` · ${k.besitz}×` : ''}</span></div>
     </div>`).join('') || '<p class="hinweis">Noch keine Karten.</p>';
@@ -420,7 +423,7 @@ $('#btnSpeichern').onclick = async () => {
 const feld = (name, titel, { typ = 'text', ganz = false, hinweis = '' } = {}) => {
   const wert = esc(zustand.karte[name] ?? '');
   const eingabe = typ === 'textarea'
-    ? `<textarea data-feld="${name}">${wert}</textarea>`
+    ? `<textarea data-feld="${name}" ${hinweis ? `placeholder="${esc(hinweis)}"` : ''}>${wert}</textarea>`
     : `<input data-feld="${name}" type="${typ}" value="${wert}" ${hinweis ? `placeholder="${esc(hinweis)}"` : ''}>`;
   return `<label class="${ganz ? 'ganz' : ''}">${titel}${eingabe}</label>`;
 };
@@ -518,6 +521,7 @@ function baueFormular() {
   }
   if (k.layout !== 'sammel') teile.push(feld('flavor', 'Flavor-Text', { typ: 'textarea', ganz: true }));
   teile.push(feld('namensgroesse', 'Schriftgröße Name (px, optional)', { typ: 'number', hinweis: 'automatisch' }));
+  teile.push(feld('kommentar', 'Kommentar (nur für dich, erscheint nicht auf der Karte)', { typ: 'textarea', ganz: true, hinweis: 'Notizen für spätere Bearbeitungen und Ideen' }));
 
   const form = $('#formKarte');
   form.innerHTML = teile.join('');

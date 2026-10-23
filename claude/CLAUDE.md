@@ -142,6 +142,7 @@ Unter Windows mit der Bash von Claude Code Pfade mit Laufwerksbuchstaben und `/`
 | `entwickelt_aus`, `schwaeche`, `resistenz`, `rueckzug`, `flavor` | normal, vollbild, gold | nein | `band` nur bei normal, `goldton` (Standard `true`) nur bei gold |
 | `effekt` | trainer | ja | dazu optional `untertyp`, `regel`, `flavor` |
 | `beschreibung`, `typ` | sammel | nein | |
+| `kommentar` | alle | nein | Notiz für spätere Bearbeitungen und Ideen, erscheint nicht auf der Karte |
 
 **Entwürfe:** Die App speichert immer, auch wenn Angaben fehlen. Die Karte bekommt dann `entwurf: true` und `offene_punkte`. Drucken lassen sich Entwürfe nur mit ausdrücklicher Zustimmung (`--mit-entwuerfen` bzw. Häkchen im Druckdialog). Die Kommandozeile speichert Entwürfe nur mit `--entwurf`.
 

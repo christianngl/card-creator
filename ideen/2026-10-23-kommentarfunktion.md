@@ -1,9 +1,9 @@
 ---
 titel: Kommentarfunktion
-status: offen
+status: erledigt
 erstellt: 2026-10-23
 issue: 4
-abgeglichen: offen
+abgeglichen: erledigt
 ---
 
 Hey Maus, es wäre schön, wenn man zu jeder Karte noch einen Kommentar schreiben könnte für zukünftige Bearbeitungen und Ideen. 
