@@ -16,11 +16,21 @@ Eigene Kartensets erstellen, bearbeiten und verwalten:
 
 Private Fotos und die daraus entstandenen Karten werden nie veröffentlicht. Sie gehen nur an den privaten Kreis und als Druckauftrag an den Druckdienst. Fotos, Karten und Druckdateien liegen in `data/` und `results/` und werden nicht eingecheckt.
 
-## Datenquellen
+## Starten
 
-- Fotos und KI-Bilder – lokale Bildbibliothek, `data/bilder/`
-- Vorlagen/Rahmen – `src/vorlagen/` (nur Layout, ohne Fotos und Texte)
-- Set-, Karten- und Sammlungsdaten – lokal in der App
+- Windows: `start.ps1` (oder die Desktop-Verknüpfung von pinx). Beim ersten Start werden die Abhängigkeiten installiert, dafür braucht es Node.js.
+- Andere Systeme: `npm install`, dann `npm start`.
+- Tests: `npm test`
+
+## Wo die Daten liegen
+
+Jedes Set liegt in einem eigenen Ordner, den du beim Anlegen auswählst. Darin stehen normale Dateien, die du im Explorer siehst und sichern kannst: `set.json`, `karten/` (jede Version einer Karte), `bilder/`, `sammlung.json` sowie `export/png/` und `export/druck/`. Set-Ordner liegen außerhalb dieses Repos.
+
+Die Vorlagen (nur Rahmen und Layout, ohne Fotos und Texte) liegen unter `src/vorlagen/`.
+
+## Kommandozeile für Claude Code
+
+`node src/cli/index.js hilfe` zeigt alle Befehle. Die Ausgabe ist immer JSON. Details stehen in [`claude/CLAUDE.md`](claude/CLAUDE.md).
 
 ## Arbeiten mit Claude
 

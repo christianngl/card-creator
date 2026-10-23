@@ -11,7 +11,9 @@ projekt:
 
 ki:
   tools: [Claude Code]
+  schnittstelle: "node src/cli/index.js (JSON)"
   anweisungen: claude/CLAUDE.md
 
 daten:
   quellen: [Fotos, KI-Bilder, Vorlagen]
+  ablage: "pro Set ein frei gewählter lokaler Ordner (außerhalb des Repos)"

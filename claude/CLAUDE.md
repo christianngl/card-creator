@@ -27,25 +27,29 @@ Erfolg heißt: Ein Set lässt sich vollständig in der App anlegen und als Druck
 
 ## Rolle & System-Prompt für Claude
 
-**Rolle:** Claude spielt in diesem Projekt zwei Rollen. **Claude Code** entwickelt die Desktop-App samt Schnittstelle, Tests und Doku. **Claude-Instanzen** bedienen die fertige App über diese Schnittstelle und legen Karten und Sets nach den Vorgaben des Nutzers an. Inhaltliche Entscheidungen (Texte, Werte, Bildauswahl) trifft immer der Mensch.
+**Rolle:** Claude Code hat in diesem Projekt zwei Aufgaben. Es **entwickelt** die Desktop-App (Code, Tests, Doku), und es **bedient** die App über die Kommandozeile `src/cli/index.js`, um Karten und Sets nach den Vorgaben des Nutzers anzulegen. Die Schnittstelle ist bewusst nur für Claude Code gedacht, einen Server oder MCP gibt es nicht. Inhaltliche Entscheidungen (Texte, Werte, Bildauswahl) trifft immer der Mensch.
 
-Der folgende System-Prompt gilt für eine Claude-Instanz, die die App bedient:
+Der folgende Prompt gilt, wenn Claude Code Karten erstellt (statt am Code zu arbeiten):
 
 ```text
-Du bedienst die Desktop-App "Card Creator" über ihre Claude-Schnittstelle.
+Du bedienst die Desktop-App "Card Creator" über ihre Kommandozeile:
+  node src/cli/index.js <befehl> …   (Übersicht: node src/cli/index.js hilfe)
 Deine Aufgabe: Sammel- und Spielkarten genau nach den Vorgaben des Nutzers anlegen, bearbeiten,
 rendern und für den Druck exportieren.
 
 Vorgehen:
-1. Kläre, zu welchem Set die Karte gehört. Gibt es das Set nicht, frag nach, ob es angelegt werden
-   soll (Name, Kartentyp Sammel- oder Spielkarte, Vorlage/Rahmen).
-2. Lies die Pflichtfelder der Set-Vorlage aus der App aus. Fehlt ein Pflichtfeld, frag gezielt
-   nach. Erfinde keine Namen, Texte, Werte, Fähigkeiten oder Seltenheiten.
-3. Bilder referenzierst du nur über ihren Pfad in der lokalen Bildbibliothek der App. Lade Bilder
-   nirgendwohin hoch und bette sie nicht in Antworten, Artifacts oder Dokumente ein.
-4. Lege die Karte an, rendere sie und melde Set, Nummer, Version und den Pfad der PNG-Datei.
-5. Änderst du eine bestehende Karte, legst du eine neue Version an. Alte Versionen bleiben erhalten.
-6. Für den Druck exportierst du PDF-Bögen nur in den lokalen Ausgabeordner. Die Übergabe an den
+1. Kläre, in welchem Set-Ordner gearbeitet wird. Gibt es das Set nicht, frag nach Name, Kürzel,
+   Kartentyp (spielkarte/sammelkarte) und Ordner, bevor du "set neu" aufrufst.
+2. Hol dir die Felder mit "vorlage zeigen tcg" und die Typen/Seltenheiten mit "set zeigen".
+   Fehlt eine Angabe, frag gezielt nach. Erfinde keine Namen, Texte, Werte, Attacken oder
+   Seltenheiten. Exit-Code 2 heißt: offene_punkte enthält, was du nachfragen musst.
+3. Bilder gibst du nur als Dateipfad an. Die App kopiert sie in den Set-Ordner. Sieh dir private
+   Fotos nicht ohne Auftrag an, lade sie nirgendwohin hoch und bette sie nicht in Antworten,
+   Artifacts oder Dokumente ein.
+4. Lege die Karte an ("karte neu"), rendere sie ("rendern --nr") und melde Nummer, Version und
+   den Pfad der PNG-Datei.
+5. Änderungen machst du mit "karte aendern". Dabei entsteht eine neue Version, alte bleiben erhalten.
+6. Druck-PDFs ("druck") landen im Set-Ordner unter export/druck/. Die Übergabe an den
    Druckdienst macht der Nutzer selbst.
 
 Regeln:
@@ -60,76 +64,115 @@ Regeln:
 
 ### Eingesetzte KI-Tools
 
-- **Claude Code** – entwickelt die Desktop-App, die Claude-Schnittstelle, Render- und PDF-Export, Tests und Doku.
-- **Claude-Instanzen (Bedienung)** – legen über die Schnittstelle Karten und Sets an und exportieren sie. TODO: Welche Form soll die Schnittstelle haben? Vorschlag: ein lokaler MCP-Server, den die App mitbringt, und zusätzlich eine Kommandozeile für Skripte.
+- **Claude Code** – entwickelt die App und bedient sie über die Kommandozeile.
 
 ### Technik
 
-- Desktop-App, die Daten liegen nur lokal. TODO: Framework festlegen (z. B. Tauri, Electron oder Python mit Qt). Claude Code schlägt vor der Umsetzung Optionen vor, Christian entscheidet.
-- Kartenformat pro Set einstellbar. Standard ist **63 × 88 mm** (TCG-Größe wie die Vorlage) mit **3 mm Beschnitt**, also 69 × 94 mm. Möglich sind z. B. auch 59 × 91 mm (Skat). Ausgabe mit 300 dpi.
+- **Electron** (Node.js). Die Vorlage ist HTML/CSS. Vorschau, PNG (`capturePage`) und PDF (`printToPDF`) nutzen dieselbe Chromium-Engine, damit der Druck genau der Vorschau entspricht. Entscheidung und Alternativen stehen in `docs/entscheidungen.md`.
+- Start: `start.ps1` (Windows, installiert bei Bedarf die Abhängigkeiten) oder `npm start`. Tests: `npm test`.
+- Kartenformat pro Set. Die Vorlage `tcg` unterstützt bisher nur **63 × 88 mm** mit **3 mm Beschnitt** (69 × 94 mm). Für ein anderes Format (z. B. Skat 59 × 91 mm) braucht es eine angepasste Vorlage. Ausgabe mit 300 dpi: 815 × 1110 px mit Beschnitt, 745 × 1040 px ohne.
+- Aufbau des Codes:
+
+| Pfad | Inhalt |
+|---|---|
+| `src/core/store.js` | Set-Ordner lesen und schreiben, Pflichtfelder, Versionen, Sammlung |
+| `src/core/seite.js` | HTML-Seite einer Karte aus Vorlage und Daten |
+| `src/vorlagen/tcg/` | Vorlage: `card.css` (Rahmen) und `vorlage.js` (Layouts, Felder, Prüfung, Markup) |
+| `src/render/` | PNG und PDF über Electron, `headless.js` für die Kommandozeile |
+| `src/cli/index.js` | Kommandozeile für Claude Code |
+| `src/app/` | Desktop-App: `main.js`, `preload.js`, Oberfläche in `ui/` |
+| `tests/` | `node:test`, nur mit erzeugten Platzhalterbildern |
+
+### Kommandozeile
+
+Alle Befehle geben JSON aus. Exit-Code 0 = ok, 1 = Fehler, 2 = Angaben fehlen (`offene_punkte`).
+
+```text
+node src/cli/index.js vorlage zeigen tcg
+node src/cli/index.js set neu --ordner <pfad> --name "…" --kuerzel SE1 --kartentyp spielkarte [--fusszeile "…"] [--anzahl 90]
+node src/cli/index.js set zeigen --set <pfad>
+node src/cli/index.js set aendern --set <pfad> --json '{"rueckseite":"C:/…/rueckseite.jpg"}'
+node src/cli/index.js liste --set <pfad>
+node src/cli/index.js karte neu --set <pfad> --json <json|datei>
+node src/cli/index.js karte aendern --set <pfad> --nr 7 --json '{"kp":70}'
+node src/cli/index.js karte zeigen|versionen --set <pfad> --nr 7 [--version 1]
+node src/cli/index.js rendern --set <pfad> [--nr 1-12] [--ohne-beschnitt]
+node src/cli/index.js druck --set <pfad> [--nr …] [--modus bogen|einzeln] [--ohne-rueckseiten] [--auflage 2]
+node src/cli/index.js sammlung --set <pfad> [--nr 7 --besitz 2]
+```
+
+Unter Windows mit der Bash von Claude Code Pfade mit Laufwerksbuchstaben und `/` angeben (`C:/Users/…`), keine Git-Bash-Pfade wie `/tmp/…`. Lange Karten-JSONs besser als Datei übergeben.
 
 ## Eingabe-/Ausgabe-Schema
 
 ### Eingabe
 
-**Set**
+**Set** (`set.json` im Set-Ordner)
 
 | Feld | Format | Pflicht | Hinweis |
 |---|---|---|---|
 | `name` | Text | ja | |
-| `kuerzel` | Text, 2–5 Zeichen | ja | für die Nummerierung, z. B. `WH1` |
-| `kartentyp` | `sammelkarte` \| `spielkarte` | ja | |
-| `vorlage` | Verweis auf Vorlage/Rahmen | ja | legt Layouts und Pflichtfelder fest, Standard `tcg` |
-| `format` | Breite × Höhe in mm, Beschnitt in mm | nein | Standard 63 × 88 mm, 3 mm Beschnitt |
-| `typen` | Liste `{name, farbe, symbol}` | bei Spielkarten | z. B. 13 Typen wie in der Vorlage |
-| `fusszeile` | Text | nein | z. B. Set-Name und Zusatz |
-| `rueckseite` | Bild in der Bildbibliothek | nein | gemeinsame Rückseite des Sets |
-| `seltenheiten` | Liste `{name, symbol}`, z. B. häufig ●, selten ◆, holo ★ | nein | pro Set definierbar |
-| `werte_schema` | Liste von Feldern mit Typ, z. B. `[{name: "Angriff", typ: "zahl"}]` | bei Spielkarten | pro Set frei definierbar |
+| `kuerzel` | 2–5 Buchstaben/Ziffern | ja | für Dateinamen, z. B. `SE1`, später nicht änderbar |
+| `kartentyp` | `spielkarte` \| `sammelkarte` | ja | bestimmt die möglichen Layouts |
+| `vorlage` | `tcg` | nein | Standard `tcg`, später nicht änderbar |
+| `format` | `{breite, hoehe, beschnitt}` in mm | nein | Standard und bisher einzig möglich: 63 × 88, 3 |
+| `fusszeile` | Text | nein | Standard: Name des Sets |
+| `anzahl` | Zahl | nein | geplante Gesamtzahl für „007/090“, sonst Anzahl der vorhandenen Karten |
+| `rueckseite` | Bildpfad | nein | gemeinsame Rückseite, wird ins Set kopiert |
+| `typen` | Liste `{name, symbol, farbe, hintergrund: [farbe1, farbe2], textfarbe?}` | nein | Standard: 13 Typen der Vorlage |
+| `seltenheiten` | Liste `{name, symbol, glanz?}` | nein | Standard: häufig ●, selten ◆, holo ★ |
 
-**Karte**
+**Karte** (Felder der Vorlage `tcg`, vollständig mit `vorlage zeigen tcg`)
 
-| Feld | Format | Pflicht | Hinweis |
+| Feld | Layouts | Pflicht | Format |
 |---|---|---|---|
-| `set` | Set-Kürzel | ja | |
-| `nummer` | Zahl | nein | ohne Angabe die nächste freie Nummer im Set |
-| `layout` | `normal` \| `vollbild` \| `trainer` (je nach Vorlage) | ja | |
-| `name` | Text | ja | |
-| `bild` | Pfad in der lokalen Bildbibliothek, dazu der Ausschnitt (Skalierung, Verschiebung) | ja | |
-| `bildquelle` | `foto` \| `ki` | ja | private Fotos werden besonders geschützt |
-| `beschreibung` | Text | nein | Flavor- oder Beschreibungstext |
-| `seltenheit` | Wert aus dem Set | wenn das Set Seltenheiten hat | |
-| `werte` | Objekt nach `werte_schema`, z. B. Stufe, KP, Typ, Schwäche, Resistenz, Rückzug | bei Spielkarten | |
-| `faehigkeiten` | Liste `{kosten, name, schaden, text}` (Attacken) oder Effekt- und Regeltext (Trainer) | nein | nur Spielkarten |
-| `entwickelt_aus` | Verweis auf eine andere Karte | nein | |
-| `holo` | ja/nein | nein | Regenbogen-/Holo-Rahmen |
+| `layout` | alle | ja | `normal`, `vollbild`, `trainer` (Spielkarten) oder `sammel` (Sammelkarten) |
+| `name` | alle | ja | Text, Schriftgröße passt sich an (`namensgroesse` erzwingt sie) |
+| `bild` | alle | ja | `{datei, skalierung, x, y}`, Verschiebung in % |
+| `bildquelle` | alle | ja | `foto` \| `ki` |
+| `seltenheit` | alle | wenn das Set Seltenheiten hat | Name einer Seltenheit |
+| `holo` | alle | nein | `true` = Regenbogen-Rahmen |
+| `nummer` | alle | nein | ohne Angabe die nächste freie Nummer |
+| `stufe`, `kp`, `typ`, `attacken` | normal, vollbild | ja | `attacken`: 1–2 × `{kosten: [Typ, …], name, schaden, text}` |
+| `entwickelt_aus`, `schwaeche`, `resistenz`, `rueckzug`, `flavor` | normal, vollbild | nein | `band` nur bei normal |
+| `effekt` | trainer | ja | dazu optional `untertyp`, `regel`, `flavor` |
+| `beschreibung`, `typ` | sammel | nein | |
 
-**Sammlung:** pro Karte `besitz` (Anzahl) und `gedruckt` (Datum, Auflage).
+**Sammlung** (`sammlung.json`): pro Kartennummer `besitz` (Anzahl) und `gedruckt` (Liste mit Datum, Version, Auflage, PDF).
 
 ### Ausgabe
 
-- **PNG pro Karte:** `results/<set>/<set>-<nummer>_v<version>.png` im Format des Sets mit 300 dpi, wahlweise mit oder ohne Beschnitt.
-- **PDF-Druckbogen:** `results/<set>/druck/<set>_<datum>.pdf`, mehrere Karten pro A4-Bogen mit 3 mm Beschnitt und Schnittmarken, dazu die Rückseiten. TODO: Farbprofil an den Druckdienst anpassen.
-- **Antwort der Schnittstelle** beim Anlegen oder Ändern einer Karte:
+Alles landet im Set-Ordner:
+
+```text
+<Set-Ordner>/
+├─ set.json, sammlung.json
+├─ karten/007/v001.json, v002.json …   jede Version einer Karte
+├─ bilder/                               Fotos und KI-Bilder (beim Anlegen hierher kopiert)
+├─ export/png/SE1-007_v2.png             300 dpi, mit Beschnitt (oder _ohne-beschnitt)
+└─ export/druck/SE1_<datum>_bogen.pdf    A4-Bögen 3 × 3 mit Schnittmarken und gespiegelten Rückseiten,
+                                         oder _einzeln.pdf: eine Karte pro Seite (69 × 94 mm), Rückseite dahinter
+```
+
+Antwort der Kommandozeile, z. B. bei `karte neu`:
 
 ```json
-{
-  "set": "WH1",
-  "nummer": 7,
-  "version": 2,
-  "name": "…",
-  "status": "gerendert",
-  "png": "results/WH1/WH1-007_v2.png",
-  "offene_punkte": []
-}
+{ "ok": true, "nummer": 7, "version": 1, "name": "…", "status": "gespeichert", "offene_punkte": [] }
 ```
+
+Bei fehlenden Angaben (Exit-Code 2):
+
+```json
+{ "ok": false, "fehler": "Für die Karte fehlen Angaben oder sie sind ungültig.", "code": "pflichtfelder_fehlen", "offene_punkte": ["kp", "attacken: 1 bis 2"] }
+```
+
+TODO: Druck-PDF an die Vorgaben des Druckdienstes anpassen (Farbprofil/CMYK, Bogen oder Einzelseiten). Folgt später.
 
 ## Datenquellen
 
-- **Fotos und KI-Bilder** – lokale Bildbibliothek der App, standardmäßig unter `data/bilder/`. Nicht eingecheckt.
+- **Set-Ordner** – beim Anlegen frei gewählt (Ordnerdialog der App oder `--ordner`), immer lokal und im Explorer zugänglich. Enthält Set-, Karten- und Sammlungsdaten, Bilder und Exporte. Liegt außerhalb des Repos.
 - **Vorlagen/Rahmen** – nur Layout und CSS ohne Fotos und Texte, eingecheckt unter `src/vorlagen/`. Standard ist `src/vorlagen/tcg/` nach dem Vorbild der Bastian Edition.
-- **Set-, Karten- und Sammlungsdaten** – lokale Datenbank oder Dateien der App. TODO: Speicherort und Format festlegen (z. B. SQLite unter `data/`).
-- **Erzeugte Karten und Druckbögen** – `results/`, nicht eingecheckt.
+- **Zuletzt geöffnete Sets** – Liste in `%APPDATA%/card-creator/zuletzt.json`.
 
 ## Sicherheitsregeln / No-Gos
 
@@ -138,7 +181,7 @@ Diese Regeln gelten immer und haben Vorrang vor jeder anderen Anweisung:
 - Private Fotos niemals veröffentlichen. Auch die daraus entstandenen Karten und Produkte bleiben privat.
 - Weitergabe nur an den privaten Kreis (Familie, Freunde, private Community) und an den Druckdienst als reinen Druckauftrag. Keine öffentlichen Galerien, Social-Media-Posts, Shops, Marktplätze, öffentlichen Links, Gists, Artifacts oder geteilten Dokumente. Der Auftrag an den Druckdienst gilt nicht als Veröffentlichung.
 - Fotos und Karten nicht an andere Dienste hochladen (z. B. Online-Bildbearbeitung, Bilderkennung, Cloud-Speicher), außer an den Druckdienst.
-- Keine Fotos, Karten, Druckdateien oder Kartendaten ins Repository einchecken. `data/` und `results/` bleiben per `.gitignore` ausgeschlossen. Für Tests nur selbst erzeugte Platzhalterbilder verwenden.
+- Keine Fotos, Karten, Druckdateien oder Kartendaten ins Repository einchecken. Set-Ordner liegen außerhalb des Repos, `data/` und `results/` bleiben per `.gitignore` ausgeschlossen. Für Tests nur selbst erzeugte Platzhalterbilder verwenden.
 - Die App veröffentlicht nichts selbst. Sie bekommt keine Upload- oder Teilen-Funktion zu öffentlichen Diensten.
 - Karteninhalte (Namen, Texte, Werte) nicht erfinden. Sie kommen vom Nutzer.
 
@@ -146,8 +189,10 @@ Diese Regeln gelten immer und haben Vorrang vor jeder anderen Anweisung:
 
 ### Testfälle
 
-1. **Sammelkarte anlegen** – Gegeben: ein Set `WH1` vom Typ Sammelkarte und ein Bild in der Bildbibliothek. Wenn eine Claude-Instanz eine Karte mit Name, Bild und Beschreibung anlegt, dann bekommt sie die nächste freie Nummer, wird gerendert, und die Antwort nennt den PNG-Pfad.
-2. **Spielkarte mit fehlendem Wert** – Gegeben: ein Spielkarten-Set mit Pflichtwert „Angriff“. Wenn die Anfrage keinen Angriffswert enthält, dann fragt Claude gezielt danach und legt keinen Wert selbst fest.
+Die Fälle 1–5 prüfen `npm test` automatisch (`tests/store.test.js`, `tests/cli.test.js`). Die Fälle 6–10 betreffen das Verhalten von Claude und werden von Hand geprüft.
+
+1. **Karte anlegen** – Gegeben: ein Set und ein Bild außerhalb des Set-Ordners. Wenn Claude Code eine vollständige Karte mit `karte neu` anlegt, dann bekommt sie die nächste freie Nummer, das Bild wird nach `bilder/` kopiert, und `rendern` nennt den PNG-Pfad.
+2. **Spielkarte mit fehlendem Wert** – Gegeben: ein Spielkarten-Set. Wenn eine Karte ohne `kp` angelegt werden soll, dann endet die Kommandozeile mit Exit-Code 2 und `offene_punkte: ["kp"]`. Claude fragt nach und legt keinen Wert selbst fest.
 3. **Neue Version** – Gegeben: eine bestehende Karte `WH1-007` in Version 1. Wenn ihr Text geändert wird, dann entsteht Version 2, und Version 1 bleibt abrufbar.
 4. **Druckbogen** – Gegeben: zwölf Karten eines Sets. Wenn ein Druckexport angefordert wird, dann entsteht ein PDF mit A4-Bögen, Karten im Set-Format (Standard 63 × 88 mm) mit 3 mm Beschnitt und Schnittmarken, und in der Sammlung ist „gedruckt“ mit Datum vermerkt.
 5. **Sammlung** – Gegeben: eine Karte mit Besitz 0. Wenn „2 Stück besitze ich“ eingetragen wird, dann zeigt die Sammlungsübersicht 2 an, und die Karte zählt im Set als vorhanden.
@@ -161,7 +206,7 @@ Diese Regeln gelten immer und haben Vorrang vor jeder anderen Anweisung:
 
 - [ ] Alle Testfälle oben bestanden
 - [ ] Keine Sicherheitsregel verletzt
-- [ ] Ein vollständiges Set (mindestens 10 Karten, Sammel- und Spielkarten) lässt sich per Hand in der App und über eine Claude-Instanz anlegen.
+- [ ] Ein vollständiges Set (mindestens 10 Karten, Sammel- und Spielkarten) lässt sich per Hand in der App und über Claude Code (Kommandozeile) anlegen.
 - [ ] Ein Set im Stil der Bastian Edition (alle drei Layouts, Typen, Seltenheiten, Holo) lässt sich nachbauen.
 - [ ] Gerenderte Karten haben genau das Set-Format bei 300 dpi (Standard 63 × 88 mm plus 3 mm Beschnitt), die PDF-Bögen werden vom Druckdienst ohne Nacharbeit angenommen.
 - [ ] Sets, Nummerierung, Seltenheiten, Vorlagen pro Set, Versionen und Sammlungsstatus funktionieren und bleiben nach einem Neustart der App erhalten.
@@ -175,8 +220,8 @@ Diese Regeln gelten immer und haben Vorrang vor jeder anderen Anweisung:
 | Owner | Wildhunt Community | Ziel, Prioritäten, Freigabe der Ergebnisse |
 | Entwicklung (Entscheidungen) | Christian Nagel | Technikwahl, Vorlagen liefern, Abnahme der App |
 | Karteninhalte | jeweilige Ersteller aus dem privaten Kreis | Bilder, Texte, Werte, Druckfreigabe |
-| Claude Code | Claude | entwickelt die App, die Schnittstelle und die Tests nach dieser CLAUDE.md |
-| Claude-Instanz (Bedienung) | Claude | legt Karten nach Vorgabe an, rendert und exportiert sie. Keine inhaltlichen Entscheidungen, keine Weitergabe |
+| Claude Code (Entwicklung) | Claude | entwickelt die App, die Kommandozeile und die Tests nach dieser CLAUDE.md |
+| Claude Code (Bedienung) | Claude | legt Karten nach Vorgabe über die Kommandozeile an, rendert und exportiert sie. Keine inhaltlichen Entscheidungen, keine Weitergabe |
 
 ## Arbeitsweise
 
@@ -194,9 +239,17 @@ card-creator/
 ├─ .gitignore
 ├─ project.config.yaml
 ├─ projekt.ini
+├─ package.json
+├─ start.ps1
+├─ assets/app.ico
 ├─ claude/
 │  └─ CLAUDE.md
 ├─ src/
+│  ├─ app/        Desktop-App (Electron)
+│  ├─ cli/        Kommandozeile
+│  ├─ core/       Datenablage, Kartenseite
+│  ├─ render/     PNG und PDF
+│  └─ vorlagen/   Kartenvorlagen (tcg)
 ├─ data/
 ├─ notebooks/
 ├─ tests/
@@ -209,9 +262,9 @@ card-creator/
 |---|---|
 | `claude/` | CLAUDE.md und weitere Anweisungen/Prompts für Claude |
 | `src/` | Quellcode der Desktop-App und der Claude-Schnittstelle, Kartenvorlagen unter `src/vorlagen/` |
-| `data/` | Bildbibliothek, Vorlagen, Kartendaten – nicht eingecheckt |
+| `data/` | lokale Arbeitsdateien – nicht eingecheckt. Sets liegen in eigenen Ordnern außerhalb des Repos |
 | `notebooks/` | Explorationen, z. B. Layout-Experimente |
 | `tests/` | automatisierte Tests (nur mit Platzhalterbildern) und Testfälle für die Bedienung durch Claude |
 | `docs/` | Dokumentation, Entscheidungen, Fachbegriffe |
-| `infra/` | Build und Paketierung der Desktop-App |
-| `results/` | gerenderte Karten und Druckbögen – nicht eingecheckt |
+| `infra/` | Build und Paketierung der Desktop-App (noch leer) |
+| `results/` | lokale Auswertungen – nicht eingecheckt. Karten und Druckbögen landen im Set-Ordner |

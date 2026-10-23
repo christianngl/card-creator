@@ -5,18 +5,14 @@
 .card::before{content:"";position:absolute;inset:0;pointer-events:none}
 .gold{left:54px;top:54px;width:582px;height:832px;border:3.5px solid #f6dc8c;border-radius:32px}
 .panel{left:62px;top:62px;width:566px;height:816px;border-radius:26px;overflow:hidden;box-shadow:0 3px 6px rgba(0,0,0,.45);background:#eee}
-.photo{position:absolute;inset:0;display:block;width:100%;height:100%;z-index:1}
+.photo{position:absolute;inset:0;display:block;width:100%;height:100%;z-index:1;object-fit:cover;transform-origin:center}
+.photo.fehlt{display:flex;align-items:center;justify-content:center;background:repeating-linear-gradient(45deg,#c8c8d0 0 12px,#b8b8c2 12px 24px);color:#464655;font-weight:700;font-size:24px}
 /* Ebenen: Foto immer hinten, Rahmen und Texte vorne */
 .card>*{z-index:3}
 .gold{z-index:4;pointer-events:none}
 .panel{z-index:0}
 .win{z-index:1}
 .shade{z-index:2}
-/* Sperre: Rahmen, Fenster, Flächen und Layout sind nicht anklickbar und bleiben fest.
-   Anklickbar: das Foto (verschieben/skalieren) und die Texte (nur Inhalt). */
-.card,.card *{pointer-events:none}
-image-slot.photo{pointer-events:auto}
-.name,.hp,.stage,.evo,.ribbon,.ah b,.ah i,.atk p,.stats>div,.flavor,.foot>span:first-child,.effect,.rule,.tpill,.tsub{pointer-events:auto}
 
 /* Kopf */
 .top{left:80px;top:76px;height:28px;display:flex;align-items:center;gap:10px;white-space:nowrap}
@@ -49,22 +45,8 @@ image-slot.photo{pointer-events:auto}
 .flavor{left:80px;top:792px;width:530px;height:50px;border:2px solid #d6ac4a;border-radius:10px;background:rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;text-align:center;padding:0 16px;font-style:italic;font-weight:500;font-size:18px;line-height:1.25;color:#32323c}
 .foot{left:80px;top:856px;width:530px;height:22px;display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:15px;letter-spacing:.02em;color:#464655}
 .sym{margin-left:8px;font-size:17px}
-.sym.selten,.sym.holo{color:#d6ac4a}
+.sym.glanz{color:#d6ac4a}
 
-/* Typ-Farben: Panel-Hintergrund + Energie */
-.ty-kuschel .panel{background:linear-gradient(#ffe4ee,#fac4d8)}.ty-kuschel .energy,.e.kuschel{background:#e86a9a}
-.ty-stahl .panel{background:linear-gradient(#ecf0f5,#c8d2de)}.ty-stahl .energy,.e.stahl{background:#808ea2}
-.ty-natur .panel{background:linear-gradient(#e2f4d6,#badea6)}.ty-natur .energy,.e.natur{background:#4ca352}
-.ty-reisen .panel{background:linear-gradient(#deeefc,#b2d4f0)}.ty-reisen .energy,.e.reisen{background:#2b8fd6}
-.ty-farblos .panel{background:linear-gradient(#f5f2eb,#dcd6c8)}.ty-farblos .energy,.e.farblos{background:#ece6d6;color:#5a503c}
-.ty-wasser .panel{background:linear-gradient(#dcf6fc,#aadeee)}.ty-wasser .energy,.e.wasser{background:#26b0ce}
-.ty-mode .panel{background:linear-gradient(#f0e4fa,#d4beec)}.ty-mode .energy,.e.mode{background:#9654c4}
-.ty-kampf .panel{background:linear-gradient(#fce8da,#ecc4aa)}.ty-kampf .energy,.e.kampf{background:#d25c30}
-.ty-kueche .panel{background:linear-gradient(#fff2d6,#f2d6a0)}.ty-kueche .energy,.e.kueche{background:#e69824}
-.ty-kunst .panel{background:linear-gradient(#fce2e6,#eebac4)}.ty-kunst .energy,.e.kunst{background:#d64058}
-.ty-gaming .panel{background:linear-gradient(#e4e8fc,#bec6f0)}.ty-gaming .energy,.e.gaming{background:#4652be}
-.ty-eis .panel{background:linear-gradient(#ecf6ff,#c4def4)}.ty-eis .energy,.e.eis{background:#5ca0d6}
-.ty-feuer .panel{background:linear-gradient(#ffe6d6,#f6baa0)}.ty-feuer .energy,.e.feuer{background:#e2422a}
 
 /* Full Art */
 .full .panel{background:#10142a}
@@ -99,3 +81,12 @@ image-slot.photo{pointer-events:auto}
 .holo .gold{border-color:#fff}
 .holo .panel::after,.holo .win::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,#ff7878,#ffdc64,#8cff8c,#6ec8ff,#be82ff,#ff78d2);mix-blend-mode:soft-light;opacity:.55}
 .holo.full .panel::after{opacity:.35}
+
+/* Typ-Farben kommen pro Set aus set.json (siehe vorlage.js, typCss) */
+.e.rueckzug{background:#ece6d6;color:#5a503c}
+
+/* Sammelkarte: großes Fotofenster, Name, Beschreibung */
+.sammel .panel{background:linear-gradient(#f5f2eb,#dcd6c8)}
+.sammel .name{top:80px;width:530px;text-align:center}
+.sammel .win{top:146px;height:500px}
+.sammel .beschr{left:80px;top:668px;width:530px;height:172px;border:2px solid #d6ac4a;border-radius:10px;background:rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;text-align:center;padding:0 22px;font-weight:500;font-size:23px;line-height:1.35;color:#32323c}

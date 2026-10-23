@@ -1,0 +1,186 @@
+#!/usr/bin/env node
+// Kommandozeile für Card Creator. Gedacht für Claude Code: jede Ausgabe ist JSON auf stdout.
+// Exit-Codes: 0 = ok, 1 = Fehler, 2 = Angaben fehlen (offene_punkte nennen, was nachzufragen ist).
+const fs = require('fs');
+const path = require('path');
+const { spawn } = require('child_process');
+const store = require('../core/store');
+const { VORLAGEN, vorlage } = require('../vorlagen');
+
+const HILFE = `Card Creator – Kommandozeile (Ausgabe immer JSON)
+
+  node src/cli/index.js <befehl> [optionen]
+
+  vorlagen                                    Vorlagen auflisten
+  vorlage zeigen <id>                         Layouts, Felder, Standard-Typen und -Seltenheiten einer Vorlage
+  set neu --ordner <pfad> --name <text> --kuerzel <WH1> --kartentyp spielkarte|sammelkarte
+          [--fusszeile <text>] [--anzahl <n>] [--vorlage tcg]
+  set zeigen --set <pfad>
+  set aendern --set <pfad> --json <json|datei>   (name, fusszeile, anzahl, rueckseite, typen, seltenheiten, format)
+  liste --set <pfad>                          alle Karten mit aktueller Version und Sammlungsstand
+  karte neu --set <pfad> --json <json|datei>  ohne "nummer" die nächste freie Nummer
+  karte aendern --set <pfad> --nr <n> --json <json|datei>   legt eine neue Version an
+  karte zeigen --set <pfad> --nr <n> [--version <v>]
+  karte versionen --set <pfad> --nr <n>
+  rendern --set <pfad> [--nr 7|1-12|1,3,5] [--ohne-beschnitt]      PNG nach <set>/export/png/
+  druck --set <pfad> [--nr …] [--modus bogen|einzeln] [--ohne-rueckseiten] [--auflage <n>]
+                                              PDF nach <set>/export/druck/, vermerkt den Druck in der Sammlung
+  sammlung --set <pfad> [--nr <n> --besitz <anzahl>]
+
+--json nimmt JSON direkt ("{...}") oder einen Dateipfad. Bilder außerhalb des Set-Ordners werden nach <set>/bilder/ kopiert.`;
+
+function parse(argv) {
+  const pos = [];
+  const opt = {};
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i];
+    if (a.startsWith('--')) {
+      const key = a.slice(2);
+      const next = argv[i + 1];
+      if (next === undefined || next.startsWith('--')) opt[key] = true;
+      else { opt[key] = next; i++; }
+    } else pos.push(a);
+  }
+  return { pos, opt };
+}
+
+function ausgabe(daten, code = 0) {
+  process.stdout.write(JSON.stringify(daten, null, 2) + '\n');
+  process.exitCode = code;
+}
+
+function fehlerAusgabe(e) {
+  const code = e.code === 'pflichtfelder_fehlen' ? 2 : 1;
+  ausgabe({ ok: false, fehler: e.message, code: e.code || 'fehler', offene_punkte: e.offene_punkte || [] }, code);
+}
+
+function brauche(opt, ...namen) {
+  const fehlen = namen.filter((n) => opt[n] === undefined || opt[n] === true);
+  if (fehlen.length) throw new store.Fehler(`Optionen fehlen: ${fehlen.map((n) => '--' + n).join(', ')}`, 'pflichtfelder_fehlen', fehlen);
+}
+
+function json(wert) {
+  const text = String(wert).trim();
+  const quelle = text.startsWith('{') || text.startsWith('[') ? text : fs.readFileSync(path.resolve(text), 'utf8');
+  try {
+    return JSON.parse(quelle);
+  } catch (e) {
+    throw new store.Fehler(`Ungültiges JSON: ${e.message}`, 'json_ungueltig');
+  }
+}
+
+function zahl(wert, name) {
+  const n = Number(wert);
+  if (!Number.isInteger(n)) throw new store.Fehler(`--${name} muss eine ganze Zahl sein.`, 'pflichtfelder_fehlen', [name]);
+  return n;
+}
+
+// Rendern braucht Chromium: dafür wird Electron ohne Fenster gestartet
+function electronAuftrag(auftrag) {
+  return new Promise((resolve, reject) => {
+    const electron = require('electron');
+    const env = { ...process.env };
+    delete env.ELECTRON_RUN_AS_NODE;
+    const kind = spawn(electron, [path.join(__dirname, '..', 'render', 'headless.js'), Buffer.from(JSON.stringify(auftrag)).toString('base64')], { env, windowsHide: true });
+    let out = '';
+    let err = '';
+    kind.stdout.on('data', (d) => { out += d; });
+    kind.stderr.on('data', (d) => { err += d; });
+    kind.on('error', reject);
+    kind.on('close', () => {
+      const zeile = out.split(/\r?\n/).find((z) => z.startsWith('@@ERGEBNIS@@'));
+      if (!zeile) return reject(new Error(`Electron hat kein Ergebnis geliefert.\n${err.trim()}`));
+      const antwort = JSON.parse(zeile.slice('@@ERGEBNIS@@'.length));
+      if (antwort.ok) resolve(antwort.ergebnis);
+      else reject(Object.assign(new store.Fehler(antwort.fehler, antwort.code, antwort.offene_punkte)));
+    });
+  });
+}
+
+async function main(argv) {
+  const { pos, opt } = parse(argv);
+  const [befehl, unter] = pos;
+  const bef = (unter && ['set', 'karte', 'vorlage'].includes(befehl)) ? `${befehl} ${unter.replace('ä', 'ae')}` : befehl;
+
+  switch (bef) {
+    case undefined:
+    case 'hilfe':
+    case 'help':
+      process.stdout.write(HILFE + '\n');
+      return;
+    case 'vorlagen':
+      return ausgabe({ ok: true, vorlagen: Object.values(VORLAGEN).map((v) => ({ id: v.id, name: v.name, formate: v.formate, layouts: v.layouts })) });
+    case 'vorlage zeigen': {
+      const v = vorlage(pos[2] || 'tcg');
+      return ausgabe({ ok: true, id: v.id, name: v.name, formate: v.formate, layouts: v.layouts, felder: v.felder, standard: v.standard });
+    }
+    case 'set neu':
+      brauche(opt, 'ordner');
+      return ausgabe({ ok: true, set: store.erstelleSet(opt.ordner, {
+        name: opt.name === true ? undefined : opt.name,
+        kuerzel: opt.kuerzel === true ? undefined : opt.kuerzel,
+        kartentyp: opt.kartentyp,
+        fusszeile: opt.fusszeile,
+        anzahl: opt.anzahl ? zahl(opt.anzahl, 'anzahl') : null,
+        vorlage: opt.vorlage,
+      }) });
+    case 'set zeigen':
+      brauche(opt, 'set');
+      return ausgabe({ ok: true, set: store.ladeSet(opt.set), karten: store.nummern(path.resolve(opt.set)).length });
+    case 'set aendern':
+      brauche(opt, 'set', 'json');
+      return ausgabe({ ok: true, set: store.aendereSet(opt.set, json(opt.json)) });
+    case 'liste':
+      brauche(opt, 'set');
+      return ausgabe({ ok: true, karten: store.listeKarten(path.resolve(opt.set)) });
+    case 'karte neu': {
+      brauche(opt, 'set', 'json');
+      const k = store.neueKarte(opt.set, json(opt.json));
+      return ausgabe({ ok: true, nummer: k.nummer, version: k.version, name: k.name, status: 'gespeichert', hinweis: 'Mit "rendern --nr" als PNG erzeugen.', offene_punkte: [] });
+    }
+    case 'karte aendern': {
+      brauche(opt, 'set', 'nr', 'json');
+      const k = store.aendereKarte(opt.set, zahl(opt.nr, 'nr'), json(opt.json));
+      return ausgabe({ ok: true, nummer: k.nummer, version: k.version, name: k.name, status: 'gespeichert', offene_punkte: [] });
+    }
+    case 'karte zeigen':
+      brauche(opt, 'set', 'nr');
+      return ausgabe({ ok: true, karte: store.ladeKarte(path.resolve(opt.set), zahl(opt.nr, 'nr'), opt.version) });
+    case 'karte versionen':
+      brauche(opt, 'set', 'nr');
+      return ausgabe({ ok: true, nummer: zahl(opt.nr, 'nr'), versionen: store.versionen(path.resolve(opt.set), zahl(opt.nr, 'nr')) });
+    case 'rendern': {
+      brauche(opt, 'set');
+      const karten = await electronAuftrag({ art: 'rendern', set: path.resolve(opt.set), optionen: { nr: opt.nr, beschnitt: !opt['ohne-beschnitt'] } });
+      return ausgabe({ ok: true, status: 'gerendert', karten });
+    }
+    case 'druck': {
+      brauche(opt, 'set');
+      const ergebnis = await electronAuftrag({ art: 'druck', set: path.resolve(opt.set), optionen: {
+        nr: opt.nr,
+        modus: opt.modus || 'bogen',
+        rueckseiten: !opt['ohne-rueckseiten'],
+        auflage: opt.auflage ? zahl(opt.auflage, 'auflage') : 1,
+      } });
+      return ausgabe({ ok: true, ...ergebnis, hinweis: 'Die Übergabe an den Druckdienst macht der Mensch.' });
+    }
+    case 'sammlung': {
+      brauche(opt, 'set');
+      const ordner = path.resolve(opt.set);
+      if (opt.nr !== undefined) {
+        brauche(opt, 'besitz');
+        return ausgabe({ ok: true, nummer: zahl(opt.nr, 'nr'), ...store.setzeBesitz(ordner, zahl(opt.nr, 'nr'), zahl(opt.besitz, 'besitz')) });
+      }
+      const karten = store.listeKarten(ordner);
+      return ausgabe({ ok: true, karten: karten.length, vorhanden: karten.filter((k) => k.besitz > 0).length, gedruckt: karten.filter((k) => k.gedruckt > 0).length, sammlung: store.ladeSammlung(ordner) });
+    }
+    default:
+      throw new store.Fehler(`Unbekannter Befehl: ${pos.join(' ')}. "hilfe" zeigt alle Befehle.`, 'unbekannter_befehl');
+  }
+}
+
+if (require.main === module) {
+  main(process.argv.slice(2)).catch(fehlerAusgabe);
+}
+
+module.exports = { main };
