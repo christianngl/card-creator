@@ -1,6 +1,6 @@
 {
   "name": "card-creator",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "private": true,
   "description": "Desktop-App zum Gestalten, Drucken und Verwalten eigener Sammel- und Spielkartensets",
   "main": "src/app/main.js",
