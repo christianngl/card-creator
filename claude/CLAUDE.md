@@ -71,7 +71,8 @@ Regeln:
 
 - **Electron** (Node.js). Die Vorlage ist HTML/CSS. Vorschau, PNG (`capturePage`) und PDF (`printToPDF`) nutzen dieselbe Chromium-Engine, damit der Druck genau der Vorschau entspricht. Entscheidung und Alternativen stehen in `docs/entscheidungen.md`.
 - Start: `start.ps1` (Windows, installiert bei Bedarf die Abhängigkeiten) oder `npm start`. Tests: `npm test`.
-- Kartenformat pro Set. Die Vorlage `tcg` unterstützt bisher nur **63 × 88 mm** mit **3 mm Beschnitt** (69 × 94 mm). Für ein anderes Format (z. B. Skat 59 × 91 mm) braucht es eine angepasste Vorlage. Ausgabe mit 300 dpi: 815 × 1110 px mit Beschnitt, 745 × 1040 px ohne.
+- Kartenformat: Das Set hat ein Standardformat (Start: **63 × 88 mm**, **3 mm Beschnitt**), jede Karte kann ein eigenes Höhe × Breite haben. Die Vorlage skaliert die Breite (Raster 690 px samt Beschnitt), zusätzliche oder fehlende Höhe nimmt das Fotofenster auf (CSS-Variable `--dh`). Zu breite oder zu schmale Formate meldet `pruefeFormat`. Bei sehr kleinen Formaten (z. B. 44 × 63 mm) rückt der Goldrahmen nahe an die Schnittkante. Ausgabe mit 300 dpi, z. B. 815 × 1110 px für 63 × 88 mm mit Beschnitt.
+- Vorschaubilder für Startseite und Kartenübersicht liegen zwischengespeichert in `<Set-Ordner>/.vorschau/` und entstehen neu, sobald sich Karte, Set oder Vorlage ändern.
 - Aufbau des Codes:
 
 | Pfad | Inhalt |
@@ -116,11 +117,12 @@ Unter Windows mit der Bash von Claude Code Pfade mit Laufwerksbuchstaben und `/`
 | `kuerzel` | 2–5 Buchstaben/Ziffern | ja | für Dateinamen, z. B. `SE1`, später nicht änderbar |
 | `kartentyp` | `spielkarte` \| `sammelkarte` | ja | bestimmt die möglichen Layouts |
 | `vorlage` | `tcg` | nein | Standard `tcg`, später nicht änderbar |
-| `format` | `{breite, hoehe, beschnitt}` in mm | nein | Standard und bisher einzig möglich: 63 × 88, 3 |
+| `format` | `{breite, hoehe, beschnitt}` in mm | nein | Standardformat für Karten ohne eigenes Format, Start: 63 × 88, 3 |
+| `titelkarte` | Kartennummer | nein | Vorschau auf der Startseite, sonst wird das Kürzel gezeigt |
 | `fusszeile` | Text | nein | Standard: Name des Sets |
 | `anzahl` | Zahl | nein | geplante Gesamtzahl für „007/090“, sonst Anzahl der vorhandenen Karten |
 | `rueckseite` | Bildpfad | nein | gemeinsame Rückseite, wird ins Set kopiert |
-| `typen` | Liste `{name, symbol, farbe, hintergrund: [farbe1, farbe2], textfarbe?}` | nein | Standard: 13 Typen der Vorlage |
+| `typen` | Liste `{name, symbol, farbe, hintergrund: [farbe1, farbe2], textfarbe?}` | nein | Standard: 13 Typen der Vorlage, in der App unter Set-Einstellungen bearbeitbar. Nach einer Änderung meldet `set aendern` unter `warnungen` Karten mit Typen, die es nicht mehr gibt |
 | `seltenheiten` | Liste `{name, symbol, glanz?}` | nein | Standard: häufig ●, selten ◆, holo ★ |
 
 **Karte** (Felder der Vorlage `tcg`, vollständig mit `vorlage zeigen tcg`)
@@ -135,6 +137,7 @@ Unter Windows mit der Bash von Claude Code Pfade mit Laufwerksbuchstaben und `/`
 | `holo` | alle | nein | `true` = Regenbogen-Rahmen |
 | `folie` | alle | nein | Effekt `{art: glitzer|sterne|strahlen|kosmos|regenbogen|glanz, bereich: bild|karte, staerke: 0.1–1}` |
 | `nummer` | alle | nein | ohne Angabe die nächste freie Nummer |
+| `format` | alle | nein | `{hoehe, breite}` in mm, sonst Standardformat des Sets. Vorschläge: `vorlage zeigen tcg` |
 | `stufe`, `kp`, `typ`, `attacken` | normal, vollbild, gold | ja | `attacken`: 1–2 × `{kosten: [Typ, …], name, schaden, text}` |
 | `entwickelt_aus`, `schwaeche`, `resistenz`, `rueckzug`, `flavor` | normal, vollbild, gold | nein | `band` nur bei normal, `goldton` (Standard `true`) nur bei gold |
 | `effekt` | trainer | ja | dazu optional `untertyp`, `regel`, `flavor` |
@@ -153,9 +156,10 @@ Alles landet im Set-Ordner:
 ├─ set.json, sammlung.json
 ├─ karten/007/v001.json, v002.json …   jede Version einer Karte
 ├─ bilder/                               Fotos und KI-Bilder (beim Anlegen hierher kopiert)
+├─ .vorschau/                            kleine Vorschaubilder für die App (Zwischenspeicher)
 ├─ export/png/SE1-007_v2.png             300 dpi, mit Beschnitt (oder _ohne-beschnitt)
-└─ export/druck/SE1_<datum>_bogen.pdf    A4-Bögen 3 × 3 mit Schnittmarken und gespiegelten Rückseiten,
-                                         oder _einzeln.pdf: eine Karte pro Seite (69 × 94 mm), Rückseite dahinter
+└─ export/druck/SE1_<datum>_bogen.pdf    A4-Bögen mit Schnittmarken und gespiegelten Rückseiten, je Format eigene Bögen,
+                                         oder _einzeln.pdf: eine Karte pro Seite in Kartengröße samt Beschnitt, Rückseite dahinter
 ```
 
 Antwort der Kommandozeile, z. B. bei `karte neu`:

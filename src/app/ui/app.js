@@ -2,7 +2,7 @@
 const $ = (sel) => document.querySelector(sel);
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
-const zustand = { info: null, nr: null, karte: null };
+const zustand = { info: null, nr: null, karte: null, ansichtZaehler: 0 };
 
 async function rufe(kanal, ...args) {
   const r = await window.cc.rufe(kanal, ...args);
@@ -40,21 +40,110 @@ function fehler(e) {
   meldung('fehler', e.message, e.offene_punkte || []);
 }
 
+// ---------- Ansichten ----------
+
+function zeigeAnsicht(id) {
+  for (const a of ['start', 'uebersicht', 'arbeit']) $(`#${a}`).hidden = a !== id;
+  $('#setAktionen').hidden = id === 'start';
+  $('#btnUebersicht').hidden = id !== 'arbeit';
+}
+
+// Lädt Vorschaubilder nacheinander (der Hauptprozess rendert sie bei Bedarf und speichert sie zwischen)
+async function ladeVorschauBilder(auftraege) {
+  const ansicht = zustand.ansichtZaehler = (zustand.ansichtZaehler || 0) + 1;
+  for (const { ordner, nr, img } of auftraege) {
+    if (ansicht !== zustand.ansichtZaehler) return;
+    try {
+      img.src = await rufe('vorschau:bild', ordner, nr);
+      img.closest('.kachel')?.classList.add('geladen');
+    } catch { /* Vorschau ist nur Beiwerk */ }
+  }
+}
+
+// ---------- Format-Auswahl (neues Set, Set-Einstellungen, Karte) ----------
+
+// Baut Auswahl + Höhe/Breite in ziel. standard: Format, das "Set-Standard" bedeutet (nur bei Karten), sonst null
+function baueFormatFeld(ziel, wert, { vorschlaege, standard = null, titel = 'Format' }) {
+  const istGleich = (a, b) => a && b && Number(a.breite) === Number(b.breite) && Number(a.hoehe) === Number(b.hoehe);
+  let auswahl = 'eigen';
+  if (!wert && standard) auswahl = 'standard';
+  else {
+    const i = vorschlaege.findIndex((v) => istGleich(v, wert));
+    if (i >= 0) auswahl = String(i);
+  }
+  const anzeige = wert || standard || vorschlaege[0];
+  const optionen = [
+    standard ? `<option value="standard">Set-Standard (${standard.hoehe} × ${standard.breite} mm)</option>` : '',
+    ...vorschlaege.map((v, i) => `<option value="${i}">${esc(v.name)} (${v.hoehe} × ${v.breite} mm)</option>`),
+    '<option value="eigen">Eigenes Format …</option>',
+  ].join('');
+  ziel.innerHTML = `<label>${titel} (Höhe × Breite in mm)<select data-format="wahl">${optionen}</select></label>
+    <label>Höhe<input type="number" data-format="hoehe" min="30" max="200" step="0.5" value="${anzeige.hoehe}"></label>
+    <label>Breite<input type="number" data-format="breite" min="30" max="200" step="0.5" value="${anzeige.breite}"></label>`;
+  const wahl = ziel.querySelector('[data-format="wahl"]');
+  wahl.value = auswahl;
+  const h = ziel.querySelector('[data-format="hoehe"]');
+  const b = ziel.querySelector('[data-format="breite"]');
+  const sperre = () => {
+    const eigen = wahl.value === 'eigen';
+    h.disabled = !eigen;
+    b.disabled = !eigen;
+    const f = wahl.value === 'standard' ? standard : vorschlaege[Number(wahl.value)];
+    if (f) { h.value = f.hoehe; b.value = f.breite; }
+  };
+  wahl.addEventListener('change', sperre);
+  sperre();
+}
+
+// null = Set-Standard
+function leseFormatFeld(ziel) {
+  const wahl = ziel.querySelector('[data-format="wahl"]');
+  if (!wahl || wahl.value === 'standard') return null;
+  return { hoehe: Number(ziel.querySelector('[data-format="hoehe"]').value), breite: Number(ziel.querySelector('[data-format="breite"]').value) };
+}
+
 // ---------- Start ----------
 
 async function zeigeStart() {
   zustand.info = null;
-  $('#start').hidden = false;
-  $('#arbeit').hidden = true;
-  $('#setAktionen').hidden = true;
+  zeigeAnsicht('start');
   $('#setTitel').textContent = '';
-  const liste = await rufe('set:zuletzt');
-  $('#zuletzt').innerHTML = liste.length
-    ? liste.map((s, i) => `<li data-i="${i}"><span class="name">${esc(s.name)}<span class="pfad">${esc(s.ordner)}</span></span></li>`).join('')
-    : '<li class="hinweis">Noch keine Sets geöffnet.</li>';
-  $('#zuletzt').querySelectorAll('li[data-i]').forEach((li) => { li.onclick = () => oeffneSet(liste[li.dataset.i].ordner); });
+  const liste = await rufe('set:liste');
+  const kacheln = liste.map((s, i) => `<div class="kachel set" data-i="${i}">
+      <div class="bild">${s.titelkarte ? '<img alt="">' : ''}<span class="kuerzel">${esc(s.kuerzel)}</span></div>
+      <div class="text"><b>${esc(s.name)}</b><span>${esc(s.kuerzel)} · ${s.karten} ${s.karten === 1 ? 'Karte' : 'Karten'}</span></div>
+      <button class="vergessen" title="Aus der Liste nehmen (Ordner bleibt erhalten)">✕</button>
+    </div>`);
+  $('#setGrid').innerHTML = `<div class="kachel aktion" id="kachelNeu"><span class="plus">+</span>Neues Set</div>
+    <div class="kachel aktion" id="kachelOeffnen"><span class="plus">⌂</span>Set-Ordner öffnen …</div>${kacheln.join('')}`;
+  $('#kachelNeu').onclick = oeffneNeuDialog;
+  $('#kachelOeffnen').onclick = async () => {
+    const ordner = await rufe('set:waehleOrdner', 'Set-Ordner öffnen');
+    if (ordner) oeffneSet(ordner);
+  };
+  const auftraege = [];
+  $('#setGrid').querySelectorAll('.kachel.set').forEach((k) => {
+    const s = liste[k.dataset.i];
+    k.onclick = () => oeffneSet(s.ordner);
+    k.querySelector('.vergessen').onclick = async (e) => {
+      e.stopPropagation();
+      await rufe('set:vergessen', s.ordner);
+      zeigeStart();
+    };
+    const img = k.querySelector('img');
+    if (img) auftraege.push({ ordner: s.ordner, nr: s.titelkarte, img });
+  });
+  ladeVorschauBilder(auftraege);
 }
 
+async function oeffneNeuDialog() {
+  const std = await rufe('vorlage:standard');
+  zustand.neuStandard = std;
+  baueFormatFeld($('#neuFormat'), std.standardFormat, { vorschlaege: std.formatVorschlaege, titel: 'Standardformat' });
+  $('#dlgNeu').showModal();
+}
+
+$('#btnNeuAbbrechen').onclick = () => $('#dlgNeu').close();
 $('#formNeu').onsubmit = async (e) => {
   e.preventDefault();
   const f = new FormData(e.target);
@@ -63,16 +152,14 @@ $('#formNeu').onsubmit = async (e) => {
   try {
     const angaben = Object.fromEntries(f);
     angaben.anzahl = angaben.anzahl ? Number(angaben.anzahl) : null;
-    zeigeSet(await rufe('set:neu', ordner, angaben));
+    angaben.format = leseFormatFeld($('#neuFormat'));
+    const info = await rufe('set:neu', ordner, angaben);
+    $('#dlgNeu').close();
     e.target.reset();
+    zeigeSet(info);
   } catch (err) {
     alert(`${err.message}\n${(err.offene_punkte || []).join('\n')}`);
   }
-};
-
-$('#btnOeffnen').onclick = async () => {
-  const ordner = await rufe('set:waehleOrdner', 'Set-Ordner öffnen');
-  if (ordner) oeffneSet(ordner);
 };
 
 async function oeffneSet(ordner) {
@@ -83,18 +170,44 @@ async function oeffneSet(ordner) {
   }
 }
 
+$('#btnStart').onclick = zeigeStart;
+
 // ---------- Set ----------
+
+function setzeTitel() {
+  $('#setTitel').textContent = `${zustand.info.set.name} (${zustand.info.set.kuerzel})`;
+}
 
 async function zeigeSet(info) {
   zustand.info = info;
-  $('#start').hidden = true;
-  $('#arbeit').hidden = false;
-  $('#setAktionen').hidden = false;
-  $('#setTitel').textContent = `${info.set.name} (${info.set.kuerzel})`;
-  await ladeListe();
-  const karten = await rufe('karten:liste', info.set.ordner);
-  if (karten.length) await waehleKarte(karten[0].nummer);
-  else neueKarte();
+  zustand.nr = null;
+  setzeTitel();
+  await zeigeUebersicht();
+}
+
+// Kartenübersicht als Grid mit Vorschaubildern der aktuellen Versionen
+async function zeigeUebersicht() {
+  zeigeAnsicht('uebersicht');
+  const ordner = zustand.info.set.ordner;
+  const karten = await rufe('karten:liste', ordner);
+  const kacheln = karten.map((k) => `<div class="kachel karte" data-nr="${k.nummer}">
+      <div class="bild"><img alt=""></div>
+      <div class="text"><b>${String(k.nummer).padStart(3, '0')} ${esc(k.name || 'ohne Name')}</b>
+      <span>${k.entwurf ? '<em>Entwurf</em> · ' : ''}v${k.version}${k.besitz ? ` · ${k.besitz}× im Besitz` : ''}${k.gedruckt ? ' · gedruckt' : ''}</span></div>
+    </div>`);
+  $('#kartenGrid').innerHTML = `<div class="kachel aktion karte" id="kachelNeueKarte"><span class="plus">+</span>Neue Karte</div>${kacheln.join('')}`;
+  $('#kachelNeueKarte').onclick = () => neueKarte();
+  const auftraege = [];
+  $('#kartenGrid').querySelectorAll('.kachel[data-nr]').forEach((k) => {
+    const nr = Number(k.dataset.nr);
+    k.onclick = () => waehleKarte(nr);
+    auftraege.push({ ordner, nr, img: k.querySelector('img') });
+  });
+  ladeVorschauBilder(auftraege);
+}
+
+function zeigeEditor() {
+  if ($('#arbeit').hidden) zeigeAnsicht('arbeit');
 }
 
 async function ladeListe() {
@@ -106,15 +219,31 @@ async function ladeListe() {
   $('#karten').querySelectorAll('li[data-nr]').forEach((li) => { li.onclick = () => waehleKarte(Number(li.dataset.nr)); });
 }
 
+function meldungAktiv(art, text, punkte, aktion) {
+  if (!$('#uebersicht').hidden) {
+    const m = $('#meldungUebersicht');
+    m.hidden = false;
+    m.className = `meldung ${art}`;
+    m.innerHTML = esc(text) + (punkte && punkte.length ? `<ul>${punkte.map((p) => `<li>${esc(p)}</li>`).join('')}</ul>` : '');
+    if (aktion) {
+      const a = document.createElement('a');
+      a.textContent = ` ${aktion.text}`;
+      a.onclick = aktion.fn;
+      m.append(a);
+    }
+  } else meldung(art, text, punkte, aktion);
+}
+
 $('#btnSchliessen').onclick = zeigeStart;
+$('#btnUebersicht').onclick = zeigeUebersicht;
 $('#btnOrdner').onclick = () => rufe('ordner:zeigen', zustand.info.set.ordner);
 $('#btnNeueKarte').onclick = () => neueKarte();
 
 $('#btnAlleRendern').onclick = async () => {
   try {
     const r = await mitWarten(() => rufe('export:png', zustand.info.set.ordner, {}));
-    meldung('ok', `${r.length} Karten als PNG gespeichert.`, [], { text: 'Ordner zeigen', fn: () => rufe('ordner:zeigen', `${zustand.info.set.ordner}/export/png`) });
-  } catch (e) { fehler(e); }
+    meldungAktiv('ok', `${r.length} Karten als PNG gespeichert.`, [], { text: 'Ordner zeigen', fn: () => rufe('ordner:zeigen', `${zustand.info.set.ordner}/export/png`) });
+  } catch (e) { meldungAktiv('fehler', e.message, e.offene_punkte); }
 };
 
 $('#btnDruck').onclick = () => $('#dlgDruck').showModal();
@@ -129,21 +258,44 @@ $('#dlgDruck').onclose = async () => {
       auflage: Number(f.get('auflage')) || 1,
       mitEntwuerfen: f.get('mitEntwuerfen') === 'on',
     }));
-    meldung('ok', `PDF mit ${r.seiten} Seiten erzeugt. Die Übergabe an den Druckdienst machst du selbst.`, [], { text: 'Datei zeigen', fn: () => rufe('datei:zeigen', r.pdf) });
-    await ladeListe();
-  } catch (e) { fehler(e); }
+    meldungAktiv('ok', `PDF mit ${r.seiten} Seiten erzeugt. Die Übergabe an den Druckdienst machst du selbst.`, [], { text: 'Datei zeigen', fn: () => rufe('datei:zeigen', r.pdf) });
+    if (!$('#arbeit').hidden) await ladeListe();
+  } catch (e) { meldungAktiv('fehler', e.message, e.offene_punkte); }
 };
 
-$('#btnSetEinstellungen').onclick = () => {
+// ---------- Set-Einstellungen ----------
+
+function typZeile(t = { name: '', symbol: '', farbe: '#808080', hintergrund: ['#f5f2eb', '#dcd6c8'] }) {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td><input data-t="name" value="${esc(t.name)}" placeholder="z. B. Feuer"></td>
+    <td><input data-t="symbol" value="${esc(t.symbol)}" maxlength="3" class="symbol" placeholder="✹"></td>
+    <td><input type="color" data-t="farbe" value="${esc(t.farbe)}"></td>
+    <td><input type="color" data-t="h1" value="${esc(t.hintergrund[0])}"><input type="color" data-t="h2" value="${esc(t.hintergrund[1])}"></td>
+    <td><button type="button" class="entfernen" title="Typ entfernen">✕</button></td>`;
+  if (t.textfarbe) tr.dataset.textfarbe = t.textfarbe;
+  tr.querySelector('.entfernen').onclick = () => tr.remove();
+  return tr;
+}
+
+async function oeffneSetEinstellungen() {
   const s = zustand.info.set;
   const f = $('#dlgSet form');
   f.name.value = s.name;
   f.fusszeile.value = s.fusszeile || '';
   f.anzahl.value = s.anzahl || '';
+  const karten = await rufe('karten:liste', s.ordner);
+  f.titelkarte.innerHTML = '<option value="">keine (Kürzel zeigen)</option>'
+    + karten.map((k) => `<option value="${k.nummer}">${String(k.nummer).padStart(3, '0')} ${esc(k.name || '')}</option>`).join('');
+  f.titelkarte.value = s.titelkarte || '';
   zustand.rueckseite = s.rueckseite;
   $('#rueckseiteName').textContent = s.rueckseite || 'keine';
+  baueFormatFeld($('#setFormat'), s.format, { vorschlaege: zustand.info.vorlage.formatVorschlaege, titel: 'Standardformat für neue Karten' });
+  $('#typenListe').replaceChildren(...(s.typen || []).map((t) => typZeile(t)));
   $('#dlgSet').showModal();
-};
+}
+
+$('#btnSetEinstellungen').onclick = oeffneSetEinstellungen;
+$('#btnTypNeu').onclick = () => $('#typenListe').append(typZeile());
 $('#btnRueckseite').onclick = async () => {
   const datei = await rufe('bild:waehlen', zustand.info.set.ordner);
   if (datei) { zustand.rueckseite = datei; $('#rueckseiteName').textContent = datei; }
@@ -151,17 +303,32 @@ $('#btnRueckseite').onclick = async () => {
 $('#dlgSet').onclose = async () => {
   if ($('#dlgSet').returnValue !== 'ok') return;
   const f = $('#dlgSet form');
+  const typen = [...$('#typenListe').children].map((tr) => {
+    const w = (k) => tr.querySelector(`[data-t="${k}"]`).value;
+    const t = { name: w('name').trim(), symbol: w('symbol').trim(), farbe: w('farbe'), hintergrund: [w('h1'), w('h2')] };
+    if (tr.dataset.textfarbe) t.textfarbe = tr.dataset.textfarbe;
+    return t;
+  });
   try {
     const info = await rufe('set:aendern', zustand.info.set.ordner, {
       name: f.name.value,
       fusszeile: f.fusszeile.value,
       anzahl: f.anzahl.value ? Number(f.anzahl.value) : null,
       rueckseite: zustand.rueckseite || null,
+      titelkarte: f.titelkarte.value ? Number(f.titelkarte.value) : null,
+      format: leseFormatFeld($('#setFormat')),
+      typen,
     });
     zustand.info = info;
-    $('#setTitel').textContent = `${info.set.name} (${info.set.kuerzel})`;
-    aktualisiereVorschau();
-  } catch (e) { fehler(e); }
+    setzeTitel();
+    if (info.warnungen.length) meldungAktiv('fehler', 'Gespeichert. Diese Karten nutzen Typen, die es nicht mehr gibt:', info.warnungen);
+    else meldungAktiv('ok', 'Set-Einstellungen gespeichert.');
+    if (!$('#uebersicht').hidden) zeigeUebersicht();
+    else { baueFormular(); }
+  } catch (e) {
+    meldungAktiv('fehler', e.message, e.offene_punkte);
+    $('#dlgSet').showModal();
+  }
 };
 
 // ---------- Karte ----------
@@ -180,6 +347,7 @@ function neueKarte() {
   $('#btnPng').hidden = true;
   $('#besitzFeld').hidden = true;
   keineMeldung();
+  zeigeEditor();
   baueFormular();
   ladeListe();
 }
@@ -197,6 +365,7 @@ async function waehleKarte(nr, version) {
     $('#besitzFeld').hidden = false;
     $('#besitz').value = r.sammlung.besitz || 0;
     keineMeldung();
+    zeigeEditor();
     if (r.karte.version !== aktuell) meldung('ok', `Du siehst Version ${r.karte.version}. Speichern legt daraus eine neue Version an.`);
     else if (r.karte.entwurf) meldung('fehler', 'Entwurf – es fehlen noch Angaben:', r.karte.offene_punkte || []);
     baueFormular();
@@ -260,6 +429,7 @@ function baueFormular() {
   const teile = [
     auswahl('layout', 'Layout', layoutsDesSets().map(([id, l]) => [id, l.titel])),
     feld('name', 'Name'),
+    '<fieldset class="formatfeld" id="karteFormat"></fieldset>',
     `<fieldset><legend>Bild</legend>
       <div class="bildzeile ganz"><span class="dateiname">${esc(b.datei || 'kein Bild – Datei auf die Karte ziehen')}</span><button type="button" id="btnBild">Bild wählen …</button></div>
       <label>Zoom <input type="range" data-bild="skalierung" min="1" max="3" step="0.01" value="${b.skalierung || 1}"></label>
@@ -305,6 +475,7 @@ function baueFormular() {
 
   const form = $('#formKarte');
   form.innerHTML = teile.join('');
+  baueFormatFeld(form.querySelector('#karteFormat'), k.format, { vorschlaege: zustand.info.vorlage.formatVorschlaege, standard: s.format, titel: 'Kartenformat' });
   form.querySelector('[data-feld="layout"]').onchange = () => { zustand.karte = { ...leseFormular() }; baueFormular(); };
   $('#btnBild').onclick = async () => {
     try {
@@ -335,6 +506,8 @@ function leseFormular() {
   const folie = {};
   form.querySelectorAll('[data-folie]').forEach((el) => { folie[el.dataset.folie] = el.dataset.folie === 'staerke' ? Number(el.value) : el.value; });
   if (folie.art) k.folie = folie;
+  const format = form.querySelector('#karteFormat') && leseFormatFeld(form.querySelector('#karteFormat'));
+  if (format) k.format = format;
   const atk = [];
   form.querySelectorAll('[data-atk]').forEach((el) => {
     const i = Number(el.dataset.atk);
@@ -353,8 +526,22 @@ async function aktualisiereVorschau() {
   if (!zustand.info || !zustand.karte) return;
   try {
     const karte = { ...leseFormular(), nummer: zustand.nr || undefined };
-    $('#vorschauFrame').srcdoc = await rufe('vorschau', zustand.info.set.ordner, karte);
+    const r = await rufe('vorschau', zustand.info.set.ordner, karte);
+    passeVorschauAn(r.masse);
+    $('#vorschauFrame').srcdoc = r.html;
   } catch (e) { fehler(e); }
+}
+
+// Vorschau ohne Beschnitt: Größe und Maßstab aus den Kartenmaßen (Vorlagenraster), höchstens 560 px hoch
+function passeVorschauAn(m) {
+  const sichtbarB = m.breite - 2 * m.beschnittPx;
+  const sichtbarH = m.hoehe - 2 * m.beschnittPx;
+  const massstab = Math.min(390 / sichtbarB, 560 / sichtbarH);
+  const v = $('#vorschau').style;
+  v.setProperty('--s', massstab);
+  v.setProperty('--b', `${m.beschnittPx}px`);
+  v.setProperty('--w', `${m.breite}px`);
+  v.setProperty('--h', `${m.hoehe}px`);
 }
 
 // ---------- Foto direkt in der Vorschau bewegen ----------

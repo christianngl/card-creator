@@ -1,10 +1,11 @@
-/* Standardvorlage TCG – fester Rahmen nach dem Vorbild der Bastian Edition. 690 x 940 px = 69 x 94 mm (63 x 88 mm + 3 mm Beschnitt), 10 px = 1 mm */
-.card{position:relative;width:690px;height:940px;overflow:hidden;font-family:'Inter',system-ui,sans-serif;color:#1e1e28;
+/* Standardvorlage TCG – Rahmen nach dem Vorbild der Bastian Edition. Raster 690 px breit (69 mm = 63 mm + 2 × 3 mm Beschnitt bei 63 × 88 mm).
+   Andere Formate: die Breite wird skaliert, die zusätzliche Höhe (--dh, gesetzt von vorlage.js) nimmt das Fotofenster auf. */
+.card{position:relative;width:690px;height:calc(940px + var(--dh,0px));overflow:hidden;font-family:'Inter',system-ui,sans-serif;color:#1e1e28;
   background:radial-gradient(circle,rgba(255,255,255,.10) 1.6px,transparent 2.2px) 0 0/22px 22px,linear-gradient(#2c345c,#181e3a)}
 .card>*{position:absolute;box-sizing:border-box;margin:0}
 .card::before{content:"";position:absolute;inset:0;pointer-events:none}
-.gold{left:54px;top:54px;width:582px;height:832px;border:3.5px solid #f6dc8c;border-radius:32px}
-.panel{left:62px;top:62px;width:566px;height:816px;border-radius:26px;overflow:hidden;box-shadow:0 3px 6px rgba(0,0,0,.45);background:#eee}
+.gold{left:54px;top:54px;width:582px;height:calc(832px + var(--dh,0px));border:3.5px solid #f6dc8c;border-radius:32px}
+.panel{left:62px;top:62px;width:566px;height:calc(816px + var(--dh,0px));border-radius:26px;overflow:hidden;box-shadow:0 3px 6px rgba(0,0,0,.45);background:#eee}
 .photo{position:absolute;inset:0;display:block;width:100%;height:100%;z-index:1;object-fit:cover;transform-origin:center}
 .photo.fehlt{display:flex;align-items:center;justify-content:center;background:repeating-linear-gradient(45deg,#c8c8d0 0 12px,#b8b8c2 12px 24px);color:#464655;font-weight:700;font-size:24px}
 /* Ebenen: Foto immer hinten, Rahmen und Texte vorne */
@@ -25,11 +26,11 @@
 .energy,.e,.sym{font-family:'Segoe UI Symbol','DejaVu Sans','Noto Sans Symbols 2','Apple Symbols',sans-serif;font-variant-emoji:text}
 
 /* Fotofenster (normale Karte + Trainer) */
-.win{left:82px;top:156px;width:526px;height:328px;overflow:hidden;box-shadow:0 0 0 4px #f6dc8c,0 0 0 9px #d6ac4a,0 6px 12px 9px rgba(0,0,0,.3)}
-.ribbon{left:110px;top:494px;width:470px;height:30px;background:#f6dc8c;clip-path:polygon(12px 0,100% 0,calc(100% - 12px) 100%,0 100%);display:flex;align-items:center;justify-content:center;font-style:italic;font-weight:600;font-size:16px;color:#463206;white-space:nowrap}
+.win{left:82px;top:156px;width:526px;height:calc(328px + var(--dh,0px));overflow:hidden;box-shadow:0 0 0 4px #f6dc8c,0 0 0 9px #d6ac4a,0 6px 12px 9px rgba(0,0,0,.3)}
+.ribbon{left:110px;top:calc(494px + var(--dh,0px));width:470px;height:30px;background:#f6dc8c;clip-path:polygon(12px 0,100% 0,calc(100% - 12px) 100%,0 100%);display:flex;align-items:center;justify-content:center;font-style:italic;font-weight:600;font-size:16px;color:#463206;white-space:nowrap}
 
 /* Attacken */
-.atks{left:80px;top:536px;width:530px}
+.atks{left:80px;top:calc(536px + var(--dh,0px));width:530px}
 .atk{margin-bottom:9px;padding-bottom:8px;border-bottom:1.5px solid rgba(0,0,0,.22)}
 .atk:last-child{border-bottom:0;margin-bottom:0}
 .ah{display:flex;align-items:center;gap:4px;height:36px}
@@ -39,11 +40,11 @@
 .e{width:31px;height:31px;flex:none;border-radius:50%;border:3px solid #fff;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;font-size:16px;color:#fff;box-shadow:0 1px 3px rgba(0,0,0,.4);vertical-align:middle}
 
 /* Werte, Flavor, Fußzeile */
-.stats{left:80px;top:734px;width:530px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));text-align:center;font-weight:700;font-size:20px;white-space:nowrap}
+.stats{left:80px;top:calc(734px + var(--dh,0px));width:530px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));text-align:center;font-weight:700;font-size:20px;white-space:nowrap}
 .stats small{display:block;font-weight:600;font-size:16px;color:#5a5a69;margin-bottom:4px}
 .stats .e{width:25px;height:25px;font-size:12px;margin:0 1px;border-width:2px}
-.flavor{left:80px;top:792px;width:530px;height:50px;border:2px solid #d6ac4a;border-radius:10px;background:rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;text-align:center;padding:0 16px;font-style:italic;font-weight:500;font-size:18px;line-height:1.25;color:#32323c}
-.foot{left:80px;top:856px;width:530px;height:22px;display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:15px;letter-spacing:.02em;color:#464655}
+.flavor{left:80px;top:calc(792px + var(--dh,0px));width:530px;height:50px;border:2px solid #d6ac4a;border-radius:10px;background:rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;text-align:center;padding:0 16px;font-style:italic;font-weight:500;font-size:18px;line-height:1.25;color:#32323c}
+.foot{left:80px;top:calc(856px + var(--dh,0px));width:530px;height:22px;display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:15px;letter-spacing:.02em;color:#464655}
 .sym{margin-left:8px;font-size:17px}
 .sym.glanz{color:#d6ac4a}
 
@@ -59,9 +60,9 @@
 .full .atk{border-bottom-color:rgba(255,255,255,.35)}
 .full .atk p{color:#ececf4}
 .full .ah b,.full .ah i{text-shadow:0 2px 5px rgba(0,0,0,.6)}
-.full .stats{top:748px;color:#fff}
+.full .stats{top:calc(748px + var(--dh,0px));color:#fff}
 .full .stats small{color:#d2d2e1}
-.full .flavor{top:801px;height:51px;background:rgba(255,255,255,.16);color:#fafaff}
+.full .flavor{top:calc(801px + var(--dh,0px));height:51px;background:rgba(255,255,255,.16);color:#fafaff}
 .full .foot{color:#ebebf5}
 
 /* Trainer */
@@ -71,9 +72,9 @@
 .tsub{right:80px;background:#d65c3c;color:#fff}
 .trainer .name{width:530px}
 .trainer .win{box-shadow:0 0 0 4px #e2e6ee,0 0 0 9px #969caa,0 6px 12px 9px rgba(0,0,0,.25)}
-.effect{left:85px;top:518px;width:520px;font-weight:500;font-size:24px;line-height:1.32;color:#1e1e28}
-.rule{left:80px;top:716px;width:530px;border-top:1.5px solid rgba(0,0,0,.25);padding-top:12px;text-align:center;font-style:italic;font-weight:600;font-size:16px;color:#6e5a3c}
-.trainer .flavor{top:780px;height:62px}
+.effect{left:85px;top:calc(518px + var(--dh,0px));width:520px;font-weight:500;font-size:24px;line-height:1.32;color:#1e1e28}
+.rule{left:80px;top:calc(716px + var(--dh,0px));width:530px;border-top:1.5px solid rgba(0,0,0,.25);padding-top:12px;text-align:center;font-style:italic;font-weight:600;font-size:16px;color:#6e5a3c}
+.trainer .flavor{top:calc(780px + var(--dh,0px));height:62px}
 
 /* Rainbow-/Holo-Rahmen */
 .card.holo{background:linear-gradient(160deg,#dcbc6a,#8c6e32)}
@@ -88,8 +89,8 @@
 /* Sammelkarte: großes Fotofenster, Name, Beschreibung */
 .sammel .panel{background:linear-gradient(#f5f2eb,#dcd6c8)}
 .sammel .name{top:80px;width:530px;text-align:center}
-.sammel .win{top:146px;height:500px}
-.sammel .beschr{left:80px;top:668px;width:530px;height:172px;border:2px solid #d6ac4a;border-radius:10px;background:rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;text-align:center;padding:0 22px;font-weight:500;font-size:23px;line-height:1.35;color:#32323c}
+.sammel .win{top:146px;height:calc(500px + var(--dh,0px))}
+.sammel .beschr{left:80px;top:calc(668px + var(--dh,0px));width:530px;height:172px;border:2px solid #d6ac4a;border-radius:10px;background:rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;text-align:center;padding:0 22px;font-weight:500;font-size:23px;line-height:1.35;color:#32323c}
 
 /* Goldkarte: Vollbild-Aufbau, Karte und Foto in Gold */
 .card.goldkarte{background:linear-gradient(135deg,#7a5a14 0%,#f6dc8c 22%,#b8862b 45%,#fbe7a1 68%,#8c6a1c 100%)}

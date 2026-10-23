@@ -110,10 +110,10 @@ async function main(argv) {
       process.stdout.write(HILFE + '\n');
       return;
     case 'vorlagen':
-      return ausgabe({ ok: true, vorlagen: Object.values(VORLAGEN).map((v) => ({ id: v.id, name: v.name, formate: v.formate, layouts: v.layouts })) });
+      return ausgabe({ ok: true, vorlagen: Object.values(VORLAGEN).map((v) => ({ id: v.id, name: v.name, standardFormat: v.standardFormat, formatVorschlaege: v.formatVorschlaege, layouts: v.layouts })) });
     case 'vorlage zeigen': {
       const v = vorlage(pos[2] || 'tcg');
-      return ausgabe({ ok: true, id: v.id, name: v.name, formate: v.formate, layouts: v.layouts, felder: v.felder, standard: v.standard });
+      return ausgabe({ ok: true, id: v.id, name: v.name, standardFormat: v.standardFormat, formatVorschlaege: v.formatVorschlaege, layouts: v.layouts, felder: v.felder, folien: v.folien, standard: v.standard });
     }
     case 'set neu':
       brauche(opt, 'ordner');

@@ -71,3 +71,15 @@ test('Entwurf nur mit --entwurf, Druck verweigert Entwürfe ohne --mit-entwuerfe
   assert.equal(d.code, 'entwuerfe');
   assert.equal(cli('druck', '--set', ordner, '--nr', String(r.nummer), '--mit-entwuerfen', '--modus', 'einzeln').ok, true);
 });
+
+test('Karten verschiedener Formate: PNG-Größe und getrennte Druckbögen', () => {
+  const r = cli('karte', 'neu', '--set', ordner, '--json', JSON.stringify(spielkarte(bild, { format: { breite: 59, hoehe: 91 } })));
+  const png = cli('rendern', '--set', ordner, '--nr', String(r.nummer)).karten[0].png;
+  // 65 × 97 mm bei 300 dpi
+  assert.deepEqual(pngGroesse(png), { breite: 768, hoehe: 1146 });
+  const d = cli('druck', '--set', ordner, '--nr', `1,${r.nummer}`);
+  assert.equal(d.ok, true);
+  assert.deepEqual(d.formate, ['63x88+3', '59x91+3']);
+  assert.equal(d.seiten, 4);
+  assert.equal(cli('druck', '--set', ordner, '--nr', `1,${r.nummer}`, '--modus', 'einzeln').seiten, 4);
+});

@@ -32,3 +32,10 @@
 - **Folien-Effekte** (`folie`): Glitzer, Sterne, Strahlen, Kosmos, Regenbogen, Glanz, über das Bild oder die ganze Karte, mit einstellbarer Stärke. Sie werden statisch gezeichnet und mit einem festen Zufallswert pro Karte erzeugt, damit Vorschau und Druck übereinstimmen. Den bewegten Glanz echter Holo-Karten kann ein Druck nicht zeigen.
 - **Goldkarte** als eigenes Layout `gold`: Vollbild-Aufbau, Karte in Gold mit feiner Gravur, Foto standardmäßig goldgetönt (`goldton: false` schaltet das ab).
 - **Fotoausschnitt** lässt sich direkt in der Vorschau mit der Maus verschieben und mit dem Mausrad zoomen, ohne die Vorschau neu zu laden. Bilder lassen sich per Drag & Drop auf die Karte ziehen.
+
+## 2026-10-23 – Übersichten, Typen, Formate
+
+- **Kartenformat pro Karte** (Höhe × Breite), das Set hat nur noch ein Standardformat. Die Vorlage skaliert die Breite und gibt zusätzliche Höhe dem Fotofenster. So passt ein Layout für TCG, Skat, Tarot und kleine Formate. Sehr breite Formate lehnt die Vorlage ab. Druckbögen trennen Karten nach Format, Einzelseiten haben die Größe der jeweiligen Karte.
+- **Typen pro Set** sind in der App bearbeitbar (Name, Symbol, Farbe, Hintergrundverlauf). Entfernte Typen, die Karten noch nutzen, meldet die App als Warnung, statt die Karten zu ändern.
+- **Startseite und Kartenübersicht als Grid** mit Vorschaubildern. Die Bilder werden im Hintergrund gerendert und pro Set in `.vorschau/` zwischengespeichert. Die Liste der Sets enthält alle bekannten Sets. „✕“ nimmt ein Set nur aus der Liste, der Ordner bleibt.
+- **Titelkarte** pro Set für die Startseite, ohne Auswahl zeigt die Kachel das Kürzel.

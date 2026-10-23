@@ -27,16 +27,17 @@ function bildUrlFuer(ordner) {
   return (datei) => pathToFileURL(path.resolve(ordner, datei)).href;
 }
 
-// zoom: Faktor gegenüber dem Vorlagenraster (1 = 10 px pro mm)
-function seite(set, inhalt, { zoom = 1 } = {}) {
+// zoom: Faktor gegenüber dem Vorlagenraster (690 px Kartenbreite samt Beschnitt), format: Kartenformat für die Höhe
+function seite(set, inhalt, { zoom = 1, format } = {}) {
   const v = vorlage(set.vorlage);
+  const m = v.masse(format || v.formatVon(set));
   return `<!doctype html>
 <html lang="de"><head><meta charset="utf-8">
 <style>
 @font-face{font-family:'Inter';font-style:normal;font-weight:100 900;src:url('${SCHRIFT.normal}') format('woff2')}
 @font-face{font-family:'Inter';font-style:italic;font-weight:100 900;src:url('${SCHRIFT.kursiv}') format('woff2')}
 html,body{margin:0;padding:0;background:transparent;overflow:hidden}
-.zoom{zoom:${zoom};width:${v.raster.breite}px;height:${v.raster.hoehe}px}
+.zoom{zoom:${zoom};width:${m.breite}px;height:${m.hoehe}px}
 </style>
 <link rel="stylesheet" href="${pathToFileURL(v.css).href}">
 <style>${v.typCss(set)}</style>
@@ -49,12 +50,20 @@ function gesamtzahl(set) {
 
 function karteSeite(set, karte, optionen) {
   const v = vorlage(set.vorlage);
-  return seite(set, v.karteHtml(set, karte, { bildUrl: bildUrlFuer(set.ordner), gesamt: gesamtzahl(set) }), optionen);
+  return seite(set, v.karteHtml(set, karte, { bildUrl: bildUrlFuer(set.ordner), gesamt: gesamtzahl(set) }), { ...optionen, format: v.formatVon(set, karte) });
 }
 
-function rueckseiteSeite(set, optionen) {
+// optionen.format: Format der Karten, zu denen die Rückseite gehört (Standard: Format des Sets)
+function rueckseiteSeite(set, optionen = {}) {
   const v = vorlage(set.vorlage);
-  return seite(set, v.rueckseiteHtml(set, { bildUrl: bildUrlFuer(set.ordner) }), optionen);
+  const format = optionen.format || v.formatVon(set);
+  return seite(set, v.rueckseiteHtml(set, { bildUrl: bildUrlFuer(set.ordner), format }), { ...optionen, format });
 }
 
-module.exports = { karteSeite, rueckseiteSeite, gesamtzahl };
+// Maße einer Karte im Vorlagenraster, z. B. für die Vorschau in der App
+function kartenMasse(set, karte) {
+  const v = vorlage(set.vorlage);
+  return v.masse(v.formatVon(set, karte));
+}
+
+module.exports = { karteSeite, rueckseiteSeite, gesamtzahl, kartenMasse };

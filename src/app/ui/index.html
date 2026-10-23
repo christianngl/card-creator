@@ -8,9 +8,10 @@
 </head>
 <body>
 <header>
-  <h1>Card Creator</h1>
+  <h1 id="btnStart" title="Zur Startseite">Card Creator</h1>
   <span id="setTitel"></span>
   <nav id="setAktionen" hidden>
+    <button id="btnUebersicht">Übersicht</button>
     <button id="btnSetEinstellungen">Set-Einstellungen</button>
     <button id="btnOrdner">Ordner öffnen</button>
     <button id="btnAlleRendern">Alle als PNG</button>
@@ -20,29 +21,12 @@
 </header>
 
 <main id="start">
-  <section class="kachel">
-    <h2>Neues Set</h2>
-    <form id="formNeu">
-      <label>Name <input name="name" required placeholder="z. B. Sommer-Edition"></label>
-      <label>Kürzel <input name="kuerzel" required pattern="[A-Za-z0-9]{2,5}" placeholder="2–5 Zeichen, z. B. SE1"></label>
-      <label>Kartentyp
-        <select name="kartentyp">
-          <option value="spielkarte">Spielkarten (KP, Attacken, Trainer …)</option>
-          <option value="sammelkarte">Sammelkarten (Bild, Name, Beschreibung)</option>
-        </select>
-      </label>
-      <label>Fußzeile <input name="fusszeile" placeholder="Standard: Name des Sets"></label>
-      <label>Geplante Anzahl Karten <input name="anzahl" type="number" min="1" placeholder="optional, für 001/090"></label>
-      <p class="hinweis">Format: 63 × 88 mm mit 3 mm Beschnitt (Vorlage TCG). Danach wählst du einen leeren Ordner, in dem das Set gespeichert wird.</p>
-      <button class="primaer">Ordner wählen und Set anlegen</button>
-    </form>
-  </section>
-  <section class="kachel">
-    <h2>Set öffnen</h2>
-    <button id="btnOeffnen">Ordner wählen …</button>
-    <h3>Zuletzt geöffnet</h3>
-    <ul id="zuletzt" class="liste"></ul>
-  </section>
+  <div class="grid" id="setGrid"></div>
+</main>
+
+<main id="uebersicht" hidden>
+  <div id="meldungUebersicht" class="meldung" hidden></div>
+  <div class="grid karten" id="kartenGrid"></div>
 </main>
 
 <main id="arbeit" hidden>
@@ -55,7 +39,7 @@
       <h2 id="editorTitel">Neue Karte</h2>
       <select id="version" hidden></select>
     </div>
-    <div id="meldung" hidden></div>
+    <div id="meldung" class="meldung" hidden></div>
     <form id="formKarte"></form>
     <div class="aktionen leiste">
       <button id="btnSpeichern" class="primaer">Speichern</button>
@@ -68,6 +52,25 @@
     <p class="hinweis">Foto in der Vorschau mit der Maus verschieben, mit dem Mausrad zoomen.<br>Bilddatei auf die Karte ziehen, um sie einzusetzen.</p>
   </section>
 </main>
+
+<dialog id="dlgNeu">
+  <form id="formNeu" method="dialog">
+    <h2>Neues Set</h2>
+    <label>Name <input name="name" required placeholder="z. B. Sommer-Edition"></label>
+    <label>Kürzel <input name="kuerzel" required pattern="[A-Za-z0-9]{2,5}" placeholder="2–5 Zeichen, z. B. SE1"></label>
+    <label>Kartentyp
+      <select name="kartentyp">
+        <option value="spielkarte">Spielkarten (KP, Attacken, Trainer …)</option>
+        <option value="sammelkarte">Sammelkarten (Bild, Name, Beschreibung)</option>
+      </select>
+    </label>
+    <label>Fußzeile <input name="fusszeile" placeholder="Standard: Name des Sets"></label>
+    <label>Geplante Anzahl Karten <input name="anzahl" type="number" min="1" placeholder="optional, für 001/090"></label>
+    <div class="formatfeld" id="neuFormat"></div>
+    <p class="hinweis">Das Format ist der Standard für neue Karten, jede Karte kann ein eigenes bekommen. Danach wählst du einen leeren Ordner, in dem das Set gespeichert wird.</p>
+    <div class="aktionen"><button type="button" id="btnNeuAbbrechen">Abbrechen</button><button class="primaer">Ordner wählen und anlegen</button></div>
+  </form>
+</dialog>
 
 <dialog id="dlgDruck">
   <form method="dialog">
@@ -82,17 +85,29 @@
     <label class="zeile"><input type="checkbox" name="rueckseiten" checked> Rückseiten mit ausgeben</label>
     <label class="zeile"><input type="checkbox" name="mitEntwuerfen"> Auch Entwürfe drucken (Karten mit fehlenden Angaben)</label>
     <label>Auflage <input name="auflage" type="number" min="1" value="1"></label>
+    <p class="hinweis">Karten unterschiedlicher Formate kommen auf getrennte Bögen.</p>
     <div class="aktionen"><button value="abbrechen">Abbrechen</button><button value="ok" class="primaer">PDF erzeugen</button></div>
   </form>
 </dialog>
 
-<dialog id="dlgSet">
+<dialog id="dlgSet" class="breit">
   <form method="dialog">
     <h2>Set-Einstellungen</h2>
-    <label>Name <input name="name" required></label>
-    <label>Fußzeile <input name="fusszeile"></label>
-    <label>Geplante Anzahl Karten <input name="anzahl" type="number" min="1"></label>
+    <div class="zweispaltig">
+      <label>Name <input name="name" required></label>
+      <label>Fußzeile <input name="fusszeile"></label>
+      <label>Geplante Anzahl Karten <input name="anzahl" type="number" min="1"></label>
+      <label>Titelkarte (Startseite) <select name="titelkarte"></select></label>
+    </div>
     <label>Rückseite <span class="zeile"><span id="rueckseiteName" class="dateiname">keine</span><button type="button" id="btnRueckseite">Bild wählen …</button></span></label>
+    <div class="formatfeld" id="setFormat"></div>
+    <h3>Typen</h3>
+    <p class="hinweis">Die Typen stehen bei den Karten zur Auswahl (Typ und Energiekosten). Hintergrund = Farbverlauf der Karte.</p>
+    <table class="typen">
+      <thead><tr><th>Name</th><th>Symbol</th><th>Farbe</th><th>Hintergrund</th><th></th></tr></thead>
+      <tbody id="typenListe"></tbody>
+    </table>
+    <button type="button" id="btnTypNeu">+ Typ hinzufügen</button>
     <div class="aktionen"><button value="abbrechen">Abbrechen</button><button value="ok" class="primaer">Speichern</button></div>
   </form>
 </dialog>

@@ -38,8 +38,38 @@ test('Set ohne Pflichtangaben meldet offene Punkte', () => {
   });
 });
 
-test('Nicht unterstütztes Format wird abgelehnt', () => {
-  assert.throws(() => store.erstelleSet(path.join(tempOrdner(), 's'), { name: 'X', kuerzel: 'XX', kartentyp: 'spielkarte', format: { breite: 59, hoehe: 91, beschnitt: 3 } }), /unterstützt dieses Format nicht/);
+test('Formate: Skat geht, zu breite Formate werden abgelehnt', () => {
+  const set = store.erstelleSet(path.join(tempOrdner(), 's'), { name: 'X', kuerzel: 'XX', kartentyp: 'spielkarte', format: { breite: 59, hoehe: 91 } });
+  assert.deepEqual(set.format, { breite: 59, hoehe: 91, beschnitt: 3 });
+  assert.throws(() => store.erstelleSet(path.join(tempOrdner(), 's'), { name: 'X', kuerzel: 'XX', kartentyp: 'spielkarte', format: { breite: 88, hoehe: 63 } }), (e) => e.offene_punkte[0].includes('zu breit'));
+});
+
+test('Karte mit eigenem Format: Höhe des Rasters wächst mit', () => {
+  const { ordner, bild } = neuesSet();
+  const k = store.neueKarte(ordner, spielkarte(bild, { format: { breite: 59, hoehe: 91 } }));
+  const html = karteSeite(store.ladeSet(ordner), k);
+  assert.match(html, /--dh:90px/);
+  assert.match(html, /height:1030px/);
+  assert.throws(() => store.neueKarte(ordner, spielkarte(bild, { format: { breite: 100, hoehe: 60 } })), (e) => e.offene_punkte.some((x) => x.includes('zu breit')));
+});
+
+test('Typen pro Set bearbeiten, Warnung bei verwendeten Typen', () => {
+  const { ordner, bild } = neuesSet();
+  store.neueKarte(ordner, spielkarte(bild));
+  const typen = [{ name: 'Blitz', symbol: 'ϟ', farbe: '#e6c619', hintergrund: ['#fff9d6', '#f2e49a'] }];
+  const set = store.aendereSet(ordner, { typen });
+  assert.equal(set.typen.length, 1);
+  assert.ok(set.warnungen[0].includes('Feuer'));
+  assert.throws(() => store.aendereSet(ordner, { typen: [{ name: 'Blitz', symbol: '', farbe: 'gelb' }] }), (e) => e.offene_punkte.includes('typen[0].symbol') && e.offene_punkte.some((x) => x.startsWith('typen[0].farbe')));
+  assert.throws(() => store.aendereSet(ordner, { typen: [typen[0], typen[0]] }), (e) => e.offene_punkte.some((x) => x.includes('doppelt')));
+});
+
+test('Titelkarte muss es im Set geben', () => {
+  const { ordner, bild } = neuesSet();
+  store.neueKarte(ordner, spielkarte(bild));
+  assert.equal(store.aendereSet(ordner, { titelkarte: 1 }).titelkarte, 1);
+  assert.equal(store.aendereSet(ordner, { titelkarte: null }).titelkarte, null);
+  assert.throws(() => store.aendereSet(ordner, { titelkarte: 5 }), { code: 'karte_fehlt' });
 });
 
 test('Testfall 1: Karte bekommt die nächste freie Nummer, Bild wird ins Set kopiert', () => {

@@ -53,6 +53,7 @@ const FELDER = {
     bildquelle: 'foto | ki (Pflicht)',
     seltenheit: 'Name einer Seltenheit des Sets (Pflicht, wenn das Set Seltenheiten hat)',
     holo: 'true | false – Regenbogen-/Holo-Rahmen',
+    format: '{ breite, hoehe } in mm, optional – sonst Standardformat des Sets; Beschnitt kommt vom Set',
     folie: `{ art: ${Object.keys(FOLIEN).join(' | ')}, bereich: bild | karte, staerke: 0.1–1 } – Effekt über Bild oder Karte, optional`,
     flavor: 'Text, optional',
   },
@@ -80,6 +81,41 @@ const FELDER = {
   },
 };
 
+// Raster: 690 px Breite für die ganze Karte samt Beschnitt. Die Höhe ergibt sich aus dem Format,
+// alles über 940 px (bzw. darunter) bekommt das Fotofenster (CSS-Variable --dh).
+const RASTER_BREITE = 690;
+const STANDARD_FORMAT = { breite: 63, hoehe: 88, beschnitt: 3 };
+const DH_GRENZEN = { min: -180, max: 500 };
+
+function masse(format = STANDARD_FORMAT) {
+  const f = { ...STANDARD_FORMAT, ...format };
+  const mmBreite = f.breite + 2 * f.beschnitt;
+  const mmHoehe = f.hoehe + 2 * f.beschnitt;
+  const pxProMm = RASTER_BREITE / mmBreite;
+  const hoehe = Math.round(mmHoehe * pxProMm);
+  return { breite: RASTER_BREITE, hoehe, dh: hoehe - 940, pxProMm, beschnittPx: f.beschnitt * pxProMm, mm: { breite: mmBreite, hoehe: mmHoehe, beschnitt: f.beschnitt } };
+}
+
+// Gibt eine Fehlermeldung zurück, wenn das Layout das Format nicht tragen kann, sonst null
+function pruefeFormat(format) {
+  const f = format || {};
+  for (const k of ['breite', 'hoehe']) {
+    if (!Number.isFinite(Number(f[k])) || Number(f[k]) < 30 || Number(f[k]) > 200) return `format.${k}: Zahl zwischen 30 und 200 mm`;
+  }
+  if (f.beschnitt !== undefined && (!Number.isFinite(Number(f.beschnitt)) || f.beschnitt < 0 || f.beschnitt > 6)) return 'format.beschnitt: 0 bis 6 mm';
+  const { dh } = masse({ breite: Number(f.breite), hoehe: Number(f.hoehe), beschnitt: f.beschnitt ?? 3 });
+  if (dh < DH_GRENZEN.min) return `format: ${f.hoehe} × ${f.breite} mm ist für dieses Layout zu breit (Höhe mindestens etwa das 1,25-Fache der Breite)`;
+  if (dh > DH_GRENZEN.max) return `format: ${f.hoehe} × ${f.breite} mm ist für dieses Layout zu schmal`;
+  return null;
+}
+
+// Format einer Karte: eigenes Format der Karte, sonst das Standardformat des Sets. Der Beschnitt kommt immer vom Set.
+function formatVon(set, karte) {
+  const basis = set.format || STANDARD_FORMAT;
+  const f = (karte && karte.format) || basis;
+  return { breite: Number(f.breite), hoehe: Number(f.hoehe), beschnitt: Number(basis.beschnitt ?? 3) };
+}
+
 function typVon(set, name) {
   return (set.typen || []).find((t) => t.name === name);
 }
@@ -101,6 +137,10 @@ function pruefe(set, karte) {
     else if (!set.seltenheiten.some((s) => s.name === karte.seltenheit)) offen.push(`seltenheit: unbekannt (${karte.seltenheit})`);
   }
   if (karte.typ && !typVon(set, karte.typ)) offen.push(`typ: unbekannt (${karte.typ})`);
+  if (karte.format) {
+    const fehler = pruefeFormat(karte.format);
+    if (fehler) offen.push(fehler);
+  }
   if (karte.folie && karte.folie.art && !FOLIEN[karte.folie.art]) offen.push(`folie.art: eines von ${Object.keys(FOLIEN).join(', ')}`);
 
   if (['normal', 'vollbild', 'gold'].includes(karte.layout)) {
@@ -257,23 +297,33 @@ function karteHtml(set, karte, { bildUrl, gesamt }) {
   if (karte.flavor && karte.layout !== 'sammel') teile.push(`<div class="flavor">${absatz(karte.flavor)}</div>`);
   teile.push(fusszeile(set, karte, gesamt));
   if (folie && !folieImBild) teile.push(folie);
-  return `<div class="${klassen.join(' ')}">${teile.join('')}</div>`;
+  const { dh } = masse(formatVon(set, karte));
+  return `<div class="${klassen.join(' ')}" style="--dh:${dh}px">${teile.join('')}</div>`;
 }
 
-function rueckseiteHtml(set, { bildUrl }) {
+// format: Format der Karten, zu denen diese Rückseite gedruckt wird
+function rueckseiteHtml(set, { bildUrl, format }) {
   const url = set.rueckseite ? bildUrl(set.rueckseite) : null;
   const bild = url
     ? `<img src="${esc(url)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" alt="">`
     : `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#f6dc8c;font-weight:900;font-size:56px;text-align:center">${esc(set.name)}</div>`;
-  return `<div class="card" style="background:#181e3a">${bild}</div>`;
+  return `<div class="card" style="background:#181e3a;--dh:${masse(format || formatVon(set)).dh}px">${bild}</div>`;
 }
 
 module.exports = {
   id: 'tcg',
   name: 'TCG (Pokémon-Stil)',
   css: path.join(__dirname, 'card.css'),
-  raster: { breite: 690, hoehe: 940, pxProMm: 10 },
-  formate: [{ breite: 63, hoehe: 88, beschnitt: 3 }],
+  standardFormat: STANDARD_FORMAT,
+  formatVorschlaege: [
+    { name: 'TCG / Pokémon', breite: 63, hoehe: 88 },
+    { name: 'Skat', breite: 59, hoehe: 91 },
+    { name: 'Tarot (klein)', breite: 70, hoehe: 120 },
+    { name: 'Mini', breite: 44, hoehe: 63 },
+  ],
+  masse,
+  pruefeFormat,
+  formatVon,
   layouts: LAYOUTS,
   folien: FOLIEN,
   felder: FELDER,

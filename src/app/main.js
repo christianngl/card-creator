@@ -1,12 +1,14 @@
 // Electron-Hauptprozess der Desktop-App
 const fs = require('fs');
 const path = require('path');
+const { pathToFileURL } = require('url');
 const { app, BrowserWindow, dialog, ipcMain, shell } = require('electron');
 const store = require('../core/store');
-const { karteSeite, rueckseiteSeite } = require('../core/seite');
+const { karteSeite, rueckseiteSeite, kartenMasse } = require('../core/seite');
 const { vorlage } = require('../vorlagen');
-const { rendereKarten, druckePdf } = require('../render/render');
+const { rendereKarten, druckePdf, vorschauBild } = require('../render/render');
 
+// Liste aller bekannten Sets (angelegt oder geöffnet), zuletzt benutzte zuerst. Die Sets selbst liegen in ihren Ordnern.
 const ZULETZT = () => path.join(app.getPath('userData'), 'zuletzt.json');
 
 function zuletzt() {
@@ -18,7 +20,10 @@ function zuletzt() {
 }
 
 function merke(ordner) {
-  const liste = [path.resolve(ordner), ...zuletzt().filter((o) => o !== path.resolve(ordner))].slice(0, 10);
+  speichereListe([path.resolve(ordner), ...zuletzt().filter((o) => o !== path.resolve(ordner))]);
+}
+
+function speichereListe(liste) {
   fs.mkdirSync(path.dirname(ZULETZT()), { recursive: true });
   fs.writeFileSync(ZULETZT(), JSON.stringify(liste, null, 2));
 }
@@ -26,7 +31,7 @@ function merke(ordner) {
 function setInfo(ordner) {
   const set = store.ladeSet(ordner);
   const v = vorlage(set.vorlage);
-  return { set, vorlage: { id: v.id, name: v.name, layouts: v.layouts, felder: v.felder, folien: v.folien || {} } };
+  return { set, vorlage: { id: v.id, name: v.name, layouts: v.layouts, felder: v.felder, folien: v.folien || {}, standardFormat: v.standardFormat, formatVorschlaege: v.formatVorschlaege } };
 }
 
 let fenster;
@@ -42,7 +47,16 @@ function bediene(kanal, fn) {
   });
 }
 
-bediene('set:zuletzt', () => zuletzt().map((o) => ({ ordner: o, name: store.ladeSet(o).name })));
+bediene('set:liste', () => zuletzt().map((o) => {
+  const s = store.ladeSet(o);
+  return { ordner: o, name: s.name, kuerzel: s.kuerzel, karten: store.nummern(o).length, titelkarte: s.titelkarte || null };
+}));
+// Nimmt ein Set nur aus der Liste, der Ordner bleibt unverändert
+bediene('set:vergessen', (ordner) => speichereListe(zuletzt().filter((o) => o !== path.resolve(ordner))));
+bediene('vorlage:standard', () => {
+  const v = vorlage('tcg');
+  return { standardFormat: v.standardFormat, formatVorschlaege: v.formatVorschlaege };
+});
 bediene('set:waehleOrdner', async (titel) => {
   const r = await dialog.showOpenDialog(fenster, { title: titel, properties: ['openDirectory', 'createDirectory', 'promptToCreate'] });
   return r.canceled ? null : r.filePaths[0];
@@ -58,8 +72,8 @@ bediene('set:oeffnen', (ordner) => {
   return info;
 });
 bediene('set:aendern', (ordner, aenderungen) => {
-  store.aendereSet(ordner, aenderungen);
-  return setInfo(ordner);
+  const { warnungen } = store.aendereSet(ordner, aenderungen);
+  return { ...setInfo(ordner), warnungen };
 });
 bediene('karten:liste', (ordner) => store.listeKarten(ordner));
 bediene('karte:laden', (ordner, nr, version) => ({ karte: store.ladeKarte(ordner, nr, version), versionen: store.versionen(ordner, nr), sammlung: store.ladeSammlung(ordner)[nr] || {} }));
@@ -74,8 +88,9 @@ bediene('bild:waehlen', async (ordner) => {
 bediene('vorschau', (ordner, karte) => {
   const set = store.ladeSet(ordner);
   const nummer = karte.nummer || (store.nummern(ordner).slice(-1)[0] || 0) + 1;
-  return karteSeite(set, { ...karte, nummer });
+  return { html: karteSeite(set, { ...karte, nummer }), masse: kartenMasse(set, karte) };
 });
+bediene('vorschau:bild', async (ordner, nr) => pathToFileURL(await vorschauBild(ordner, nr)).href);
 bediene('vorschau:rueckseite', (ordner) => rueckseiteSeite(store.ladeSet(ordner)));
 bediene('sammlung:besitz', (ordner, nr, anzahl) => store.setzeBesitz(ordner, nr, anzahl));
 bediene('export:png', (ordner, optionen) => rendereKarten(ordner, optionen));

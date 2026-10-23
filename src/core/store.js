@@ -34,11 +34,45 @@ function istSet(ordner) {
 }
 
 function pruefeFormat(v, format) {
-  const ok = v.formate.some((f) => f.breite === format.breite && f.hoehe === format.hoehe && f.beschnitt === format.beschnitt);
-  if (!ok) {
-    const moeglich = v.formate.map((f) => `${f.breite} × ${f.hoehe} mm (+${f.beschnitt} mm Beschnitt)`).join(', ');
-    throw new Error(`Die Vorlage ${v.id} unterstützt dieses Format nicht. Möglich: ${moeglich}`);
+  const fehler = v.pruefeFormat(format);
+  if (fehler) throw new Fehler('Das Kartenformat passt nicht.', 'pflichtfelder_fehlen', [fehler]);
+}
+
+const FARBE = /^#[0-9a-fA-F]{6}$/;
+
+// Typen eines Sets prüfen und vereinheitlichen: Name und Symbol Pflicht, Farben als #rrggbb
+function pruefeTypen(typen) {
+  if (!Array.isArray(typen)) throw new Fehler('typen muss eine Liste sein.', 'pflichtfelder_fehlen', ['typen']);
+  const offen = [];
+  const namen = new Set();
+  const sauber = typen.map((t, i) => {
+    const name = String(t.name || '').trim();
+    if (!name) offen.push(`typen[${i}].name`);
+    else if (namen.has(name.toLowerCase())) offen.push(`typen[${i}].name: doppelt (${name})`);
+    namen.add(name.toLowerCase());
+    if (!String(t.symbol || '').trim()) offen.push(`typen[${i}].symbol`);
+    if (!FARBE.test(t.farbe || '')) offen.push(`typen[${i}].farbe: #rrggbb`);
+    const hintergrund = Array.isArray(t.hintergrund) && t.hintergrund.length === 2 ? t.hintergrund : ['#f5f2eb', '#dcd6c8'];
+    if (!hintergrund.every((h) => FARBE.test(h))) offen.push(`typen[${i}].hintergrund: zwei Farben #rrggbb`);
+    const typ = { name, symbol: String(t.symbol || '').trim(), farbe: t.farbe, hintergrund };
+    if (t.textfarbe && FARBE.test(t.textfarbe)) typ.textfarbe = t.textfarbe;
+    return typ;
+  });
+  if (offen.length) throw new Fehler('Die Typen sind unvollständig.', 'pflichtfelder_fehlen', offen);
+  return sauber;
+}
+
+// Karten (aktuelle Version), die Typen verwenden, die das Set nicht mehr kennt
+function fremdeTypen(ordner, typen) {
+  const bekannt = new Set(typen.map((t) => t.name));
+  const treffer = [];
+  for (const n of nummern(ordner)) {
+    const k = ladeKarte(ordner, n);
+    const benutzt = [k.typ, ...(k.attacken || []).flatMap((a) => a.kosten || [])].filter(Boolean);
+    const fehlen = [...new Set(benutzt.filter((t) => !bekannt.has(t)))];
+    if (fehlen.length) treffer.push(`Karte ${n} (${k.name || 'ohne Name'}) nutzt ${fehlen.join(', ')}`);
   }
+  return treffer;
 }
 
 // Legt ein neues Set in einem leeren (oder noch nicht vorhandenen) Ordner an
@@ -54,7 +88,7 @@ function erstelleSet(ordner, angaben) {
   if (offen.length) throw new Fehler('Angaben für das Set fehlen.', 'pflichtfelder_fehlen', offen);
 
   const v = vorlage(angaben.vorlage || 'tcg');
-  const format = angaben.format || v.formate[0];
+  const format = { ...v.standardFormat, ...(angaben.format || {}) };
   pruefeFormat(v, format);
   const set = {
     name: angaben.name,
@@ -65,8 +99,9 @@ function erstelleSet(ordner, angaben) {
     fusszeile: angaben.fusszeile || angaben.name,
     anzahl: angaben.anzahl || null,
     rueckseite: null,
-    typen: angaben.typen || v.standard.typen,
+    typen: angaben.typen ? pruefeTypen(angaben.typen) : v.standard.typen,
     seltenheiten: angaben.seltenheiten || v.standard.seltenheiten,
+    titelkarte: null,
     angelegt: new Date().toISOString().slice(0, 10),
   };
   for (const unter of ['karten', 'bilder', 'export/png', 'export/druck']) fs.mkdirSync(path.join(ordner, unter), { recursive: true });
@@ -82,17 +117,27 @@ function ladeSet(ordner) {
 }
 
 // Ändert Set-Angaben. Kürzel und Vorlage bleiben fest, weil Dateinamen und Karten daran hängen.
+// Die Antwort enthält "warnungen", z. B. Karten, deren Typ es nach der Änderung nicht mehr gibt.
 function aendereSet(ordner, aenderungen) {
   const { ordner: _o, ...set } = ladeSet(ordner);
-  const erlaubt = ['name', 'fusszeile', 'anzahl', 'rueckseite', 'typen', 'seltenheiten', 'format'];
+  const erlaubt = ['name', 'fusszeile', 'anzahl', 'rueckseite', 'typen', 'seltenheiten', 'format', 'titelkarte'];
   for (const [k, wert] of Object.entries(aenderungen)) {
     if (!erlaubt.includes(k)) throw new Fehler(`Das Feld ${k} lässt sich nicht ändern (änderbar: ${erlaubt.join(', ')}).`, 'nicht_aenderbar');
     set[k] = wert;
   }
-  if (aenderungen.format) pruefeFormat(vorlage(set.vorlage), set.format);
+  if (aenderungen.format) {
+    set.format = { ...vorlage(set.vorlage).standardFormat, ...aenderungen.format };
+    pruefeFormat(vorlage(set.vorlage), set.format);
+  }
+  if (aenderungen.typen) set.typen = pruefeTypen(aenderungen.typen);
+  if (aenderungen.titelkarte !== undefined && aenderungen.titelkarte !== null) {
+    set.titelkarte = Number(aenderungen.titelkarte);
+    if (!nummern(ordner).includes(set.titelkarte)) throw new Fehler(`Titelkarte ${aenderungen.titelkarte} gibt es im Set nicht.`, 'karte_fehlt');
+  }
   if (aenderungen.rueckseite) set.rueckseite = importiereBild(ordner, aenderungen.rueckseite);
   schreibeJson(setDatei(ordner), set);
-  return { ...set, ordner: path.resolve(ordner) };
+  const warnungen = aenderungen.typen ? fremdeTypen(ordner, set.typen) : [];
+  return { ...set, ordner: path.resolve(ordner), warnungen };
 }
 
 function kartenOrdner(ordner, nummer) {
