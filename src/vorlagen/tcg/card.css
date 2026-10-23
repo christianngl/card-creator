@@ -1,0 +1,101 @@
+/* Standardvorlage TCG – fester Rahmen nach dem Vorbild der Bastian Edition. 690 x 940 px = 69 x 94 mm (63 x 88 mm + 3 mm Beschnitt), 10 px = 1 mm */
+.card{position:relative;width:690px;height:940px;overflow:hidden;font-family:'Inter',system-ui,sans-serif;color:#1e1e28;
+  background:radial-gradient(circle,rgba(255,255,255,.10) 1.6px,transparent 2.2px) 0 0/22px 22px,linear-gradient(#2c345c,#181e3a)}
+.card>*{position:absolute;box-sizing:border-box;margin:0}
+.card::before{content:"";position:absolute;inset:0;pointer-events:none}
+.gold{left:54px;top:54px;width:582px;height:832px;border:3.5px solid #f6dc8c;border-radius:32px}
+.panel{left:62px;top:62px;width:566px;height:816px;border-radius:26px;overflow:hidden;box-shadow:0 3px 6px rgba(0,0,0,.45);background:#eee}
+.photo{position:absolute;inset:0;display:block;width:100%;height:100%;z-index:1}
+/* Ebenen: Foto immer hinten, Rahmen und Texte vorne */
+.card>*{z-index:3}
+.gold{z-index:4;pointer-events:none}
+.panel{z-index:0}
+.win{z-index:1}
+.shade{z-index:2}
+/* Sperre: Rahmen, Fenster, Flächen und Layout sind nicht anklickbar und bleiben fest.
+   Anklickbar: das Foto (verschieben/skalieren) und die Texte (nur Inhalt). */
+.card,.card *{pointer-events:none}
+image-slot.photo{pointer-events:auto}
+.name,.hp,.stage,.evo,.ribbon,.ah b,.ah i,.atk p,.stats>div,.flavor,.foot>span:first-child,.effect,.rule,.tpill,.tsub{pointer-events:auto}
+
+/* Kopf */
+.top{left:80px;top:76px;height:28px;display:flex;align-items:center;gap:10px;white-space:nowrap}
+.stage{height:28px;padding:0 13px;border-radius:14px;background:#fff;border:2px solid #d6ac4a;font-weight:800;font-size:18px;color:#181e3a;text-transform:uppercase;display:inline-flex;align-items:center}
+.evo{font-style:italic;font-weight:500;font-size:16px;color:#464655}
+.name{left:80px;top:104px;width:330px;height:50px;font-weight:900;font-size:46px;line-height:50px;letter-spacing:-.01em;white-space:nowrap;overflow:visible}
+.hp{right:142px;top:98px;height:56px;font-weight:900;font-size:52px;line-height:56px;color:#c81e28;white-space:nowrap}
+.hp small{font-size:19px;font-weight:800;color:#1e1e28;margin-right:5px}
+.energy{left:558px;top:88px;width:52px;height:52px;border-radius:50%;border:4px solid #fff;display:flex;align-items:center;justify-content:center;font-size:28px;color:#fff;box-shadow:0 2px 5px rgba(0,0,0,.4)}
+.energy,.e,.sym{font-family:'Segoe UI Symbol','DejaVu Sans','Noto Sans Symbols 2','Apple Symbols',sans-serif;font-variant-emoji:text}
+
+/* Fotofenster (normale Karte + Trainer) */
+.win{left:82px;top:156px;width:526px;height:328px;overflow:hidden;box-shadow:0 0 0 4px #f6dc8c,0 0 0 9px #d6ac4a,0 6px 12px 9px rgba(0,0,0,.3)}
+.ribbon{left:110px;top:494px;width:470px;height:30px;background:#f6dc8c;clip-path:polygon(12px 0,100% 0,calc(100% - 12px) 100%,0 100%);display:flex;align-items:center;justify-content:center;font-style:italic;font-weight:600;font-size:16px;color:#463206;white-space:nowrap}
+
+/* Attacken */
+.atks{left:80px;top:536px;width:530px}
+.atk{margin-bottom:9px;padding-bottom:8px;border-bottom:1.5px solid rgba(0,0,0,.22)}
+.atk:last-child{border-bottom:0;margin-bottom:0}
+.ah{display:flex;align-items:center;gap:4px;height:36px}
+.ah b{flex:1;margin-left:8px;font-weight:800;font-size:29px;white-space:nowrap}
+.ah i{font-style:normal;font-weight:900;font-size:39px}
+.atk p{margin:4px 0 0;font-size:19px;line-height:1.22;color:#2d2d37}
+.e{width:31px;height:31px;flex:none;border-radius:50%;border:3px solid #fff;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;font-size:16px;color:#fff;box-shadow:0 1px 3px rgba(0,0,0,.4);vertical-align:middle}
+
+/* Werte, Flavor, Fußzeile */
+.stats{left:80px;top:734px;width:530px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));text-align:center;font-weight:700;font-size:20px;white-space:nowrap}
+.stats small{display:block;font-weight:600;font-size:16px;color:#5a5a69;margin-bottom:4px}
+.stats .e{width:25px;height:25px;font-size:12px;margin:0 1px;border-width:2px}
+.flavor{left:80px;top:792px;width:530px;height:50px;border:2px solid #d6ac4a;border-radius:10px;background:rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;text-align:center;padding:0 16px;font-style:italic;font-weight:500;font-size:18px;line-height:1.25;color:#32323c}
+.foot{left:80px;top:856px;width:530px;height:22px;display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:15px;letter-spacing:.02em;color:#464655}
+.sym{margin-left:8px;font-size:17px}
+.sym.selten,.sym.holo{color:#d6ac4a}
+
+/* Typ-Farben: Panel-Hintergrund + Energie */
+.ty-kuschel .panel{background:linear-gradient(#ffe4ee,#fac4d8)}.ty-kuschel .energy,.e.kuschel{background:#e86a9a}
+.ty-stahl .panel{background:linear-gradient(#ecf0f5,#c8d2de)}.ty-stahl .energy,.e.stahl{background:#808ea2}
+.ty-natur .panel{background:linear-gradient(#e2f4d6,#badea6)}.ty-natur .energy,.e.natur{background:#4ca352}
+.ty-reisen .panel{background:linear-gradient(#deeefc,#b2d4f0)}.ty-reisen .energy,.e.reisen{background:#2b8fd6}
+.ty-farblos .panel{background:linear-gradient(#f5f2eb,#dcd6c8)}.ty-farblos .energy,.e.farblos{background:#ece6d6;color:#5a503c}
+.ty-wasser .panel{background:linear-gradient(#dcf6fc,#aadeee)}.ty-wasser .energy,.e.wasser{background:#26b0ce}
+.ty-mode .panel{background:linear-gradient(#f0e4fa,#d4beec)}.ty-mode .energy,.e.mode{background:#9654c4}
+.ty-kampf .panel{background:linear-gradient(#fce8da,#ecc4aa)}.ty-kampf .energy,.e.kampf{background:#d25c30}
+.ty-kueche .panel{background:linear-gradient(#fff2d6,#f2d6a0)}.ty-kueche .energy,.e.kueche{background:#e69824}
+.ty-kunst .panel{background:linear-gradient(#fce2e6,#eebac4)}.ty-kunst .energy,.e.kunst{background:#d64058}
+.ty-gaming .panel{background:linear-gradient(#e4e8fc,#bec6f0)}.ty-gaming .energy,.e.gaming{background:#4652be}
+.ty-eis .panel{background:linear-gradient(#ecf6ff,#c4def4)}.ty-eis .energy,.e.eis{background:#5ca0d6}
+.ty-feuer .panel{background:linear-gradient(#ffe6d6,#f6baa0)}.ty-feuer .energy,.e.feuer{background:#e2422a}
+
+/* Full Art */
+.full .panel{background:#10142a}
+.shade{position:absolute;inset:0;pointer-events:none;background:linear-gradient(to bottom,rgba(10,14,32,.67) 0%,rgba(10,14,32,0) 20%,rgba(10,14,32,0) 46%,rgba(10,14,32,.88) 78%,rgba(10,14,32,.92) 100%)}
+.full{color:#fff}
+.full .name,.full .hp{color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.7)}
+.full .hp small{color:#fff}
+.full .evo{color:#ebebf5;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+.full .atks{top:auto;bottom:206px}
+.full .atk{border-bottom-color:rgba(255,255,255,.35)}
+.full .atk p{color:#ececf4}
+.full .ah b,.full .ah i{text-shadow:0 2px 5px rgba(0,0,0,.6)}
+.full .stats{top:748px;color:#fff}
+.full .stats small{color:#d2d2e1}
+.full .flavor{top:801px;height:51px;background:rgba(255,255,255,.16);color:#fafaff}
+.full .foot{color:#ebebf5}
+
+/* Trainer */
+.trainer .panel{background:linear-gradient(#faf6ec,#e2d8c4)}
+.tpill,.tsub{top:76px;height:28px;padding:0 13px;border-radius:14px;font-weight:800;font-size:18px;display:flex;align-items:center;white-space:nowrap}
+.tpill{left:80px;background:#181e3a;color:#f6dc8c}
+.tsub{right:80px;background:#d65c3c;color:#fff}
+.trainer .name{width:530px}
+.trainer .win{box-shadow:0 0 0 4px #e2e6ee,0 0 0 9px #969caa,0 6px 12px 9px rgba(0,0,0,.25)}
+.effect{left:85px;top:518px;width:520px;font-weight:500;font-size:24px;line-height:1.32;color:#1e1e28}
+.rule{left:80px;top:716px;width:530px;border-top:1.5px solid rgba(0,0,0,.25);padding-top:12px;text-align:center;font-style:italic;font-weight:600;font-size:16px;color:#6e5a3c}
+.trainer .flavor{top:780px;height:62px}
+
+/* Rainbow-/Holo-Rahmen */
+.card.holo{background:linear-gradient(160deg,#dcbc6a,#8c6e32)}
+.card.holo::before{background:linear-gradient(115deg,rgba(255,120,120,.8),rgba(255,220,100,.8),rgba(140,255,140,.8),rgba(110,200,255,.8),rgba(190,130,255,.8),rgba(255,120,210,.8),rgba(255,120,120,.8));mix-blend-mode:overlay}
+.holo .gold{border-color:#fff}
+.holo .panel::after,.holo .win::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,#ff7878,#ffdc64,#8cff8c,#6ec8ff,#be82ff,#ff78d2);mix-blend-mode:soft-light;opacity:.55}
+.holo.full .panel::after{opacity:.35}

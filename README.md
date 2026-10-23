@@ -9,7 +9,7 @@ Eigene Kartensets erstellen, bearbeiten und verwalten:
 - Sammelkarten (Bild, Name, Beschreibung) und Spielkarten im TCG-Stil (Werte, Fähigkeiten, Seltenheit)
 - Bilder aus eigenen Fotos oder KI-generiert
 - Sets mit Nummerierung, Seltenheiten, Vorlagen/Rahmen pro Set, Versionen einzelner Karten und einer Sammlungsübersicht
-- Ausgabe als PNG pro Karte und als druckfertige PDF-Bögen für einen Druckdienst, im Skat-Format 59 × 91 mm
+- Ausgabe als PNG pro Karte und als druckfertige PDF-Bögen für einen Druckdienst, Format pro Set einstellbar (Standard 63 × 88 mm mit 3 mm Beschnitt)
 - Schnittstelle, über die Claude-Instanzen die App zur Kartenerstellung bedienen können
 
 ## Privatsphäre
@@ -19,7 +19,7 @@ Private Fotos und die daraus entstandenen Karten werden nie veröffentlicht. Sie
 ## Datenquellen
 
 - Fotos und KI-Bilder – lokale Bildbibliothek, `data/bilder/`
-- Vorlagen/Rahmen – `data/vorlagen/`
+- Vorlagen/Rahmen – `src/vorlagen/` (nur Layout, ohne Fotos und Texte)
 - Set-, Karten- und Sammlungsdaten – lokal in der App
 
 ## Arbeiten mit Claude
