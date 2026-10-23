@@ -231,3 +231,22 @@ test('Karte kopieren: neue Nummer, gleiche Inhalte, Version 1', () => {
   assert.equal(store.ladeKarte(ordner, 1).layout, 'normal');
   assert.equal(store.ladeSammlung(ordner)[2], undefined);
 });
+
+test('Regenbogenkarte: eigenes Layout mit Regenbogenglanz, auch für Sammelkarten', () => {
+  const { ordner, bild } = neuesSet();
+  const k = store.neueKarte(ordner, spielkarte(bild, { layout: 'regenbogen' }));
+  const html = karteSeite(store.ladeSet(ordner), k);
+  assert.match(html, /class="card full regenbogenkarte/);
+  assert.match(html, /class="regenbogenglanz"/);
+  // ohne KP wie jede Spielkarte unvollständig
+  assert.throws(() => store.neueKarte(ordner, spielkarte(bild, { layout: 'regenbogen', kp: undefined })), (e) => e.offene_punkte.includes('kp'));
+  const sammel = neuesSet({ kartentyp: 'sammelkarte' });
+  const s = store.neueKarte(sammel.ordner, { layout: 'sammel-regenbogen', name: 'Strand', bild: { datei: sammel.bild }, bildquelle: 'foto', seltenheit: 'holo', beschreibung: 'Sonne' });
+  const shtml = karteSeite(store.ladeSet(sammel.ordner), s);
+  assert.match(shtml, /class="card sammel regenbogenkarte/);
+  assert.match(shtml, /class="beschr"/);
+  // Stil übertragen stellt normale Spielkarten auf Regenbogen um
+  store.neueKarte(ordner, spielkarte(bild));
+  store.uebertrageStil(ordner, 1, [2]);
+  assert.equal(store.ladeKarte(ordner, 2).layout, 'regenbogen');
+});

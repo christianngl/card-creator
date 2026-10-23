@@ -107,6 +107,16 @@
 .full.goldkarte .stats small{color:#6b5212}
 .full.goldkarte .flavor{background:rgba(255,248,220,.5);border-color:#8c6a1c;color:#3a2a06}
 
+/* Regenbogenkarte (Layouts regenbogen und sammel-regenbogen): Regenbogenrahmen, Glanz über dem Foto */
+.card.regenbogenkarte{background:linear-gradient(160deg,#ff8f8f 0%,#ffd77a 20%,#93ef93 40%,#7fcaff 60%,#bd8fff 80%,#ff8fd2 100%)}
+.card.regenbogenkarte::before{background:repeating-linear-gradient(45deg,rgba(255,255,255,.28) 0 2px,transparent 2px 10px),radial-gradient(circle,rgba(255,255,255,.35) 1.6px,transparent 2.2px) 0 0/22px 22px;mix-blend-mode:overlay}
+.regenbogenkarte .gold{border-color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.5),0 0 14px rgba(255,255,255,.6)}
+.regenbogenglanz{position:absolute;inset:0;z-index:1;pointer-events:none;mix-blend-mode:soft-light;opacity:.75;
+  background:repeating-linear-gradient(115deg,#ff7878 0,#ffdc64 40px,#8cff8c 80px,#6ec8ff 120px,#be82ff 160px,#ff78d2 200px,#ff7878 240px)}
+.regenbogenkarte .panel>.shade{z-index:2}
+.sammel.regenbogenkarte .panel{background:linear-gradient(160deg,#ffe3e3,#fff2cc 25%,#e0fbe0 50%,#dcefff 75%,#f1e2ff)}
+.sammel.regenbogenkarte .beschr{border-color:#be82ff}
+
 /* Folien-Effekte (Feld "folie"): im Bild oder über der ganzen Karte */
 .fx{position:absolute;inset:0;pointer-events:none;z-index:1;overflow:hidden}
 .fx svg{position:absolute;inset:0;width:100%;height:100%}

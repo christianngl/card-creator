@@ -131,19 +131,19 @@ Unter Windows mit der Bash von Claude Code Pfade mit Laufwerksbuchstaben und `/`
 
 | Feld | Layouts | Pflicht | Format |
 |---|---|---|---|
-| `layout` | alle | ja | `normal`, `vollbild`, `gold`, `trainer` (Spielkarten) oder `sammel` (Sammelkarten) |
+| `layout` | alle | ja | `normal`, `vollbild`, `gold`, `regenbogen`, `trainer` (Spielkarten) oder `sammel`, `sammel-regenbogen` (Sammelkarten). Regenbogenkarten haben Regenbogenrahmen und -glanz fest eingebaut |
 | `name` | alle | ja | Text, Schriftgröße passt sich an (`namensgroesse` erzwingt sie) |
 | `bild` | alle | ja | `{datei, skalierung, x, y}`: das Foto füllt das Fenster immer ganz, `x`/`y` (-100 bis 100) wählen den sichtbaren Ausschnitt (positiv = Foto nach rechts/unten), `skalierung` ab 1 zoomt hinein. Das Originalfoto bleibt unverändert in `bilder/` |
 | `bildquelle` | alle | ja | `foto` \| `ki` |
 | `seltenheit` | alle | wenn das Set Seltenheiten hat | Name einer Seltenheit |
-| `holo` | alle | nein | `true` = Regenbogen-Rahmen |
+| `holo` | alle | nein | veraltet: `true` = Holo-Rahmen bei älteren Karten, neu stattdessen Layout `regenbogen` bzw. `sammel-regenbogen` |
 | `folie` | alle | nein | Effekt `{art: glitzer|sterne|strahlen|kosmos|regenbogen|glanz, bereich: bild|karte, staerke: 0.1–1}` |
 | `nummer` | alle | nein | ohne Angabe die nächste freie Nummer |
 | `format` | alle | nein | `{hoehe, breite}` in mm, sonst Standardformat des Sets. Vorschläge: `vorlage zeigen tcg` |
-| `stufe`, `kp`, `typ`, `attacken` | normal, vollbild, gold | ja | `attacken`: 1–2 × `{kosten: [Typ, …], name, schaden, text}` |
-| `entwickelt_aus`, `schwaeche`, `resistenz`, `rueckzug`, `flavor` | normal, vollbild, gold | nein | `band` nur bei normal, `goldton` (Standard `true`) nur bei gold |
+| `stufe`, `kp`, `typ`, `attacken` | normal, vollbild, gold, regenbogen | ja | `attacken`: 1–2 × `{kosten: [Typ, …], name, schaden, text}` |
+| `entwickelt_aus`, `schwaeche`, `resistenz`, `rueckzug`, `flavor` | normal, vollbild, gold, regenbogen | nein | `band` nur bei normal, `goldton` (Standard `true`) nur bei gold |
 | `effekt` | trainer | ja | dazu optional `untertyp`, `regel`, `flavor` |
-| `beschreibung`, `typ` | sammel | nein | |
+| `beschreibung`, `typ` | sammel, sammel-regenbogen | nein | |
 | `kommentar` | alle | nein | Notiz für spätere Bearbeitungen und Ideen, erscheint nicht auf der Karte |
 | `kopiert_von` | alle | nein | `{nummer, version}`, setzt `karte kopieren` |
 

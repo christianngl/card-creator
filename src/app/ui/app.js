@@ -348,6 +348,9 @@ $('#dlgSet').onclose = async () => {
 
 // ---------- Karte ----------
 
+// spiel (KP, Typ, Attacken), trainer oder sammel, siehe vorlage.js
+const aufbauVon = (layout) => zustand.info.vorlage.layouts[layout]?.aufbau;
+
 function layoutsDesSets() {
   const { layouts } = zustand.info.vorlage;
   return Object.entries(layouts).filter(([, l]) => l.kartentyp === zustand.info.set.kartentyp);
@@ -541,7 +544,8 @@ function baueFormular() {
     </fieldset>`,
   ];
   if (seltenheiten.length) teile.push(auswahl('seltenheit', 'Seltenheit', seltenheiten, { leer: true }));
-  teile.push(`<label class="zeile"><input type="checkbox" data-feld="holo" ${k.holo ? 'checked' : ''}> Holo-/Regenbogen-Rahmen</label>`);
+  // Holo-Rahmen gibt es nur noch für ältere Karten, neu dafür das Layout Regenbogenkarte
+  if (k.holo) teile.push('<label class="zeile" title="Statt des Rahmens gibt es jetzt das Layout Regenbogenkarte"><input type="checkbox" data-feld="holo" checked> Holo-Rahmen (alt)</label>');
   const folie = k.folie || {};
   const folien = Object.entries(zustand.info.vorlage.folien || {});
   teile.push(`<fieldset><legend>Effekt (Folie)</legend>
@@ -550,7 +554,7 @@ function baueFormular() {
       <label class="ganz">Stärke <input type="range" data-folie="staerke" min="0.1" max="1" step="0.05" value="${folie.staerke || 0.7}"></label>
     </fieldset>`);
 
-  if (['normal', 'vollbild', 'gold'].includes(k.layout)) {
+  if (aufbauVon(k.layout) === 'spiel') {
     if (k.layout === 'gold') teile.push(`<label class="zeile ganz"><input type="checkbox" data-feld="goldton" ${k.goldton !== false ? 'checked' : ''}> Foto in Gold einfärben</label>`);
     teile.push(feld('stufe', 'Stufe', { hinweis: 'z. B. Basis, Phase 1' }), feld('entwickelt_aus', 'Entwickelt sich aus'),
       feld('kp', 'KP', { typ: 'number' }), auswahl('typ', 'Typ', typen, { leer: true }));
@@ -569,10 +573,10 @@ function baueFormular() {
   } else if (k.layout === 'trainer') {
     teile.push(feld('untertyp', 'Untertyp', { hinweis: 'z. B. UNTERSTÜTZER' }), feld('effekt', 'Effekt', { typ: 'textarea', ganz: true }),
       feld('regel', 'Regeltext', { typ: 'textarea', ganz: true }));
-  } else if (k.layout === 'sammel') {
+  } else if (aufbauVon(k.layout) === 'sammel') {
     teile.push(auswahl('typ', 'Typ (Farbe)', typen, { leer: true }), feld('beschreibung', 'Beschreibung', { typ: 'textarea', ganz: true }));
   }
-  if (k.layout !== 'sammel') teile.push(feld('flavor', 'Flavor-Text', { typ: 'textarea', ganz: true }));
+  if (aufbauVon(k.layout) !== 'sammel') teile.push(feld('flavor', 'Flavor-Text', { typ: 'textarea', ganz: true }));
   teile.push(feld('namensgroesse', 'Schriftgröße Name (px, optional)', { typ: 'number', hinweis: 'automatisch' }));
   teile.push(feld('kommentar', 'Kommentar (nur für dich, erscheint nicht auf der Karte)', { typ: 'textarea', ganz: true, hinweis: 'Notizen für spätere Bearbeitungen und Ideen' }));
 
@@ -623,7 +627,7 @@ function leseFormular() {
     else atk[i][el.dataset.teil] = el.dataset.teil === 'schaden' && /^\d+$/.test(v) ? Number(v) : v;
   });
   const gefuellt = atk.filter((a) => a && Object.keys(a).length);
-  if (['normal', 'vollbild', 'gold'].includes(k.layout)) k.attacken = gefuellt;
+  if (aufbauVon(k.layout) === 'spiel') k.attacken = gefuellt;
   return k;
 }
 

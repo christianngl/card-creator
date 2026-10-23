@@ -25,13 +25,18 @@ const STANDARD_SELTENHEITEN = [
   { name: 'holo', symbol: '★', glanz: true },
 ];
 
+// aufbau: welche Felder das Layout hat (spiel = KP, Typ, Attacken). Layouts mit gleichem Aufbau lassen sich
+// ineinander umstellen, ohne dass Angaben fehlen.
 const LAYOUTS = {
-  normal: { titel: 'Normal (Fotofenster oben)', kartentyp: 'spielkarte' },
-  vollbild: { titel: 'Vollbild (Foto über die ganze Karte)', kartentyp: 'spielkarte' },
-  gold: { titel: 'Goldkarte (Vollbild in Gold)', kartentyp: 'spielkarte' },
-  trainer: { titel: 'Trainer (Effektkarte)', kartentyp: 'spielkarte' },
-  sammel: { titel: 'Sammelkarte (Bild, Name, Beschreibung)', kartentyp: 'sammelkarte' },
+  normal: { titel: 'Normal (Fotofenster oben)', kartentyp: 'spielkarte', aufbau: 'spiel' },
+  vollbild: { titel: 'Vollbild (Foto über die ganze Karte)', kartentyp: 'spielkarte', aufbau: 'spiel' },
+  gold: { titel: 'Goldkarte (Vollbild in Gold)', kartentyp: 'spielkarte', aufbau: 'spiel' },
+  regenbogen: { titel: 'Regenbogenkarte (Vollbild mit Regenbogenglanz)', kartentyp: 'spielkarte', aufbau: 'spiel' },
+  trainer: { titel: 'Trainer (Effektkarte)', kartentyp: 'spielkarte', aufbau: 'trainer' },
+  sammel: { titel: 'Sammelkarte (Bild, Name, Beschreibung)', kartentyp: 'sammelkarte', aufbau: 'sammel' },
+  'sammel-regenbogen': { titel: 'Regenbogen-Sammelkarte (mit Regenbogenglanz)', kartentyp: 'sammelkarte', aufbau: 'sammel' },
 };
+const aufbau = (layout) => (LAYOUTS[layout] || {}).aufbau;
 
 // Folien-Effekte wie bei Holo-Karten. Statisch gezeichnet, damit sie genau so gedruckt werden.
 const FOLIEN = {
@@ -43,30 +48,28 @@ const FOLIEN = {
   glanz: 'Glanz (Lichtstreifen)',
 };
 
-// Stil = Gestaltung ohne Inhalte. "Stil übertragen" kopiert diese Felder, das Layout nur innerhalb einer Familie,
+// Stil = Gestaltung ohne Inhalte. "Stil übertragen" kopiert diese Felder, das Layout nur bei gleichem Aufbau,
 // weil sonst Pflichtfelder wegfallen oder fehlen würden (z. B. normal -> trainer).
 const STIL_FELDER = ['folie', 'format', 'holo', 'goldton'];
-const LAYOUT_FAMILIEN = [['normal', 'vollbild', 'gold'], ['trainer'], ['sammel']];
 
 // Änderungen, die den Stil von quelle auf ziel übertragen. Fehlt ein Feld in der Quelle, wird es beim Ziel entfernt (undefined).
 function stilVon(quelle, ziel) {
   const aenderungen = {};
   for (const f of STIL_FELDER) aenderungen[f] = quelle[f] === undefined ? undefined : JSON.parse(JSON.stringify(quelle[f]));
-  const familie = LAYOUT_FAMILIEN.find((l) => l.includes(quelle.layout));
-  if (familie && familie.includes(ziel.layout)) aenderungen.layout = quelle.layout;
+  if (aufbau(quelle.layout) && aufbau(quelle.layout) === aufbau(ziel.layout)) aenderungen.layout = quelle.layout;
   return aenderungen;
 }
 
 // Feldbeschreibung für "card-creator vorlage zeigen" und die Oberfläche
 const FELDER = {
   alle: {
-    layout: 'normal | vollbild | gold | trainer | sammel',
+    layout: Object.keys(LAYOUTS).join(' | '),
     name: 'Text (Pflicht)',
     namensgroesse: 'Zahl in px, optional (sonst automatisch passend)',
     bild: '{ datei, skalierung (>= 1), x, y (Verschiebung in %) } – datei relativ zum Set-Ordner oder absoluter Pfad (wird ins Set kopiert)',
     bildquelle: 'foto | ki (Pflicht)',
     seltenheit: 'Name einer Seltenheit des Sets (Pflicht, wenn das Set Seltenheiten hat)',
-    holo: 'true | false – Regenbogen-/Holo-Rahmen',
+    holo: 'true | false – veraltet, stattdessen Layout regenbogen bzw. sammel-regenbogen (alte Karten zeigen den Holo-Rahmen weiter)',
     format: '{ breite, hoehe } in mm, optional – sonst Standardformat des Sets; Beschnitt kommt vom Set',
     folie: `{ art: ${Object.keys(FOLIEN).join(' | ')}, bereich: bild | karte, staerke: 0.1–1 } – Effekt über Bild oder Karte, optional`,
     flavor: 'Text, optional',
@@ -85,6 +88,7 @@ const FELDER = {
   },
   vollbild: 'wie normal, ohne band',
   gold: 'wie vollbild, dazu goldton: true | false (Foto in Gold eingefärbt, Standard true)',
+  regenbogen: 'wie vollbild, mit Regenbogenrahmen und Regenbogenglanz über dem Foto',
   trainer: {
     untertyp: 'Text, z. B. UNTERSTÜTZER, optional',
     effekt: 'Text (Pflicht)',
@@ -94,6 +98,7 @@ const FELDER = {
     typ: 'Name eines Typs des Sets, optional (färbt die Karte)',
     beschreibung: 'Text, optional',
   },
+  'sammel-regenbogen': 'wie sammel, mit Regenbogenrahmen und Regenbogenglanz über dem Bild',
 };
 
 // Raster: 690 px Breite für die ganze Karte samt Beschnitt. Die Höhe ergibt sich aus dem Format,
@@ -158,7 +163,7 @@ function pruefe(set, karte) {
   }
   if (karte.folie && karte.folie.art && !FOLIEN[karte.folie.art]) offen.push(`folie.art: eines von ${Object.keys(FOLIEN).join(', ')}`);
 
-  if (['normal', 'vollbild', 'gold'].includes(karte.layout)) {
+  if (aufbau(karte.layout) === 'spiel') {
     if (leer(karte.stufe)) offen.push('stufe');
     if (leer(karte.kp)) offen.push('kp');
     if (leer(karte.typ)) offen.push('typ');
@@ -274,18 +279,20 @@ function name(karte, extraStil = '') {
 // Liefert das Markup einer Karte (ein .card-Element). bildUrl wandelt einen Bildpfad des Sets in eine URL um.
 function karteHtml(set, karte, { bildUrl, gesamt }) {
   const typ = typVon(set, karte.typ);
-  const klassen = ['card', { normal: 'normal', vollbild: 'full', gold: 'full goldkarte', trainer: 'trainer', sammel: 'sammel' }[karte.layout] || 'normal'];
+  const klassen = ['card', { normal: 'normal', vollbild: 'full', gold: 'full goldkarte', regenbogen: 'full regenbogenkarte', trainer: 'trainer', sammel: 'sammel', 'sammel-regenbogen': 'sammel regenbogenkarte' }[karte.layout] || 'normal'];
   if (typ) klassen.push(`ty-${slug(typ.name)}`);
   if (karte.holo) klassen.push('holo');
   const teile = ['<div class="gold"></div>'];
   const folie = folieHtml(karte);
   const folieImBild = folie && (karte.folie.bereich || 'bild') === 'bild' ? folie : '';
+  // Regenbogenkarten haben den Regenbogenglanz fest über dem Foto, ein Folien-Effekt kommt bei Bedarf dazu
+  const glanz = ['regenbogen', 'sammel-regenbogen'].includes(karte.layout) ? '<div class="regenbogenglanz"></div>' : '';
 
-  if (karte.layout === 'vollbild' || karte.layout === 'gold') {
+  if (['vollbild', 'gold', 'regenbogen'].includes(karte.layout)) {
     const goldton = karte.layout === 'gold' && karte.goldton !== false ? ' goldton' : '';
-    teile.push(`<div class="panel">${foto(karte, bildUrl, goldton)}${folieImBild}<div class="shade"></div></div>`);
+    teile.push(`<div class="panel">${foto(karte, bildUrl, goldton)}${glanz}${folieImBild}<div class="shade"></div></div>`);
   } else {
-    teile.push('<div class="panel"></div>', `<div class="win">${foto(karte, bildUrl)}${folieImBild}</div>`);
+    teile.push('<div class="panel"></div>', `<div class="win">${foto(karte, bildUrl)}${glanz}${folieImBild}</div>`);
   }
 
   if (karte.layout === 'trainer') {
@@ -294,7 +301,7 @@ function karteHtml(set, karte, { bildUrl, gesamt }) {
     teile.push(name(karte));
     teile.push(`<div class="effect">${absatz(karte.effekt)}</div>`);
     if (karte.regel) teile.push(`<div class="rule">${absatz(karte.regel)}</div>`);
-  } else if (karte.layout === 'sammel') {
+  } else if (aufbau(karte.layout) === 'sammel') {
     teile.push(name(karte));
     if (karte.beschreibung) teile.push(`<div class="beschr">${absatz(karte.beschreibung)}</div>`);
   } else {
@@ -315,7 +322,7 @@ function karteHtml(set, karte, { bildUrl, gesamt }) {
     teile.push(`<div class="stats"><div><small>Schwäche</small>${esc(karte.schwaeche || '–')}</div><div><small>Resistenz</small>${esc(karte.resistenz || '–')}</div><div><small>Rückzug</small>${rueckzug || '–'}</div></div>`);
   }
 
-  if (karte.flavor && karte.layout !== 'sammel') teile.push(`<div class="flavor">${absatz(karte.flavor)}</div>`);
+  if (karte.flavor && aufbau(karte.layout) !== 'sammel') teile.push(`<div class="flavor">${absatz(karte.flavor)}</div>`);
   teile.push(fusszeile(set, karte, gesamt));
   if (folie && !folieImBild) teile.push(folie);
   const { dh } = masse(formatVon(set, karte));
