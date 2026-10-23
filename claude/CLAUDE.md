@@ -43,6 +43,7 @@ Vorgehen:
 2. Hol dir die Felder mit "vorlage zeigen tcg" und die Typen/Seltenheiten mit "set zeigen".
    Fehlt eine Angabe, frag gezielt nach. Erfinde keine Namen, Texte, Werte, Attacken oder
    Seltenheiten. Exit-Code 2 heißt: offene_punkte enthält, was du nachfragen musst.
+   Nur wenn der Nutzer es ausdrücklich will, speicherst du mit --entwurf trotz fehlender Angaben.
 3. Bilder gibst du nur als Dateipfad an. Die App kopiert sie in den Set-Ordner. Sieh dir private
    Fotos nicht ohne Auftrag an, lade sie nirgendwohin hoch und bette sie nicht in Antworten,
    Artifacts oder Dokumente ein.
@@ -93,11 +94,11 @@ node src/cli/index.js set neu --ordner <pfad> --name "…" --kuerzel SE1 --karte
 node src/cli/index.js set zeigen --set <pfad>
 node src/cli/index.js set aendern --set <pfad> --json '{"rueckseite":"C:/…/rueckseite.jpg"}'
 node src/cli/index.js liste --set <pfad>
-node src/cli/index.js karte neu --set <pfad> --json <json|datei>
-node src/cli/index.js karte aendern --set <pfad> --nr 7 --json '{"kp":70}'
+node src/cli/index.js karte neu --set <pfad> --json <json|datei> [--entwurf]
+node src/cli/index.js karte aendern --set <pfad> --nr 7 --json '{"kp":70}' [--entwurf]
 node src/cli/index.js karte zeigen|versionen --set <pfad> --nr 7 [--version 1]
 node src/cli/index.js rendern --set <pfad> [--nr 1-12] [--ohne-beschnitt]
-node src/cli/index.js druck --set <pfad> [--nr …] [--modus bogen|einzeln] [--ohne-rueckseiten] [--auflage 2]
+node src/cli/index.js druck --set <pfad> [--nr …] [--modus bogen|einzeln] [--ohne-rueckseiten] [--auflage 2] [--mit-entwuerfen]
 node src/cli/index.js sammlung --set <pfad> [--nr 7 --besitz 2]
 ```
 
@@ -126,17 +127,20 @@ Unter Windows mit der Bash von Claude Code Pfade mit Laufwerksbuchstaben und `/`
 
 | Feld | Layouts | Pflicht | Format |
 |---|---|---|---|
-| `layout` | alle | ja | `normal`, `vollbild`, `trainer` (Spielkarten) oder `sammel` (Sammelkarten) |
+| `layout` | alle | ja | `normal`, `vollbild`, `gold`, `trainer` (Spielkarten) oder `sammel` (Sammelkarten) |
 | `name` | alle | ja | Text, Schriftgröße passt sich an (`namensgroesse` erzwingt sie) |
 | `bild` | alle | ja | `{datei, skalierung, x, y}`, Verschiebung in % |
 | `bildquelle` | alle | ja | `foto` \| `ki` |
 | `seltenheit` | alle | wenn das Set Seltenheiten hat | Name einer Seltenheit |
 | `holo` | alle | nein | `true` = Regenbogen-Rahmen |
+| `folie` | alle | nein | Effekt `{art: glitzer|sterne|strahlen|kosmos|regenbogen|glanz, bereich: bild|karte, staerke: 0.1–1}` |
 | `nummer` | alle | nein | ohne Angabe die nächste freie Nummer |
-| `stufe`, `kp`, `typ`, `attacken` | normal, vollbild | ja | `attacken`: 1–2 × `{kosten: [Typ, …], name, schaden, text}` |
-| `entwickelt_aus`, `schwaeche`, `resistenz`, `rueckzug`, `flavor` | normal, vollbild | nein | `band` nur bei normal |
+| `stufe`, `kp`, `typ`, `attacken` | normal, vollbild, gold | ja | `attacken`: 1–2 × `{kosten: [Typ, …], name, schaden, text}` |
+| `entwickelt_aus`, `schwaeche`, `resistenz`, `rueckzug`, `flavor` | normal, vollbild, gold | nein | `band` nur bei normal, `goldton` (Standard `true`) nur bei gold |
 | `effekt` | trainer | ja | dazu optional `untertyp`, `regel`, `flavor` |
 | `beschreibung`, `typ` | sammel | nein | |
+
+**Entwürfe:** Die App speichert immer, auch wenn Angaben fehlen. Die Karte bekommt dann `entwurf: true` und `offene_punkte`. Drucken lassen sich Entwürfe nur mit ausdrücklicher Zustimmung (`--mit-entwuerfen` bzw. Häkchen im Druckdialog). Die Kommandozeile speichert Entwürfe nur mit `--entwurf`.
 
 **Sammlung** (`sammlung.json`): pro Kartennummer `besitz` (Anzahl) und `gedruckt` (Liste mit Datum, Version, Auflage, PDF).
 

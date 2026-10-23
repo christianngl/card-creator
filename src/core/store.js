@@ -128,7 +128,7 @@ function listeKarten(ordner) {
   return nummern(ordner).map((n) => {
     const k = ladeKarte(ordner, n);
     const s = sammlung[n] || {};
-    return { nummer: n, version: k.version, name: k.name, layout: k.layout, typ: k.typ || null, seltenheit: k.seltenheit || null, besitz: s.besitz || 0, gedruckt: (s.gedruckt || []).length };
+    return { nummer: n, version: k.version, name: k.name, layout: k.layout, typ: k.typ || null, seltenheit: k.seltenheit || null, entwurf: !!k.entwurf, besitz: s.besitz || 0, gedruckt: (s.gedruckt || []).length };
   });
 }
 
@@ -147,9 +147,17 @@ function importiereBild(ordner, datei) {
   return path.relative(ordner, ziel).split(path.sep).join('/');
 }
 
-function pruefeKarte(set, karte) {
-  const offen = vorlage(set.vorlage).pruefe(set, karte);
-  if (offen.length) throw new Fehler('Für die Karte fehlen Angaben oder sie sind ungültig.', 'pflichtfelder_fehlen', offen);
+// Prüft die Pflichtfelder. Als Entwurf wird trotzdem gespeichert, die offenen Punkte stehen dann in der Karte.
+function pruefeKarte(set, karte, entwurf) {
+  delete karte.entwurf;
+  delete karte.offene_punkte;
+  const v = vorlage(set.vorlage);
+  if (entwurf && !v.layouts[karte.layout]) karte.layout = Object.keys(v.layouts).find((l) => v.layouts[l].kartentyp === set.kartentyp);
+  const offen = v.pruefe(set, karte);
+  if (!offen.length) return;
+  if (!entwurf) throw new Fehler('Für die Karte fehlen Angaben oder sie sind ungültig.', 'pflichtfelder_fehlen', offen);
+  karte.entwurf = true;
+  karte.offene_punkte = offen;
 }
 
 function bildUebernehmen(ordner, karte) {
@@ -161,27 +169,30 @@ function speichereVersion(ordner, karte) {
 }
 
 // Legt eine Karte an. Ohne nummer bekommt sie die nächste freie Nummer.
-function neueKarte(ordner, daten) {
+// entwurf: auch mit fehlenden Angaben speichern (die Karte ist dann als Entwurf markiert)
+function neueKarte(ordner, daten, { entwurf = false } = {}) {
   const set = ladeSet(ordner);
   const vorhanden = nummern(set.ordner);
   let nummer = daten.nummer ? Number(daten.nummer) : (vorhanden.length ? vorhanden[vorhanden.length - 1] + 1 : 1);
   if (!Number.isInteger(nummer) || nummer < 1) throw new Fehler('nummer muss eine positive ganze Zahl sein.', 'pflichtfelder_fehlen', ['nummer']);
   if (vorhanden.includes(nummer)) throw new Fehler(`Nummer ${nummer} ist schon vergeben. Zum Ändern "karte aendern" verwenden.`, 'nummer_vergeben');
   const karte = { ...daten, nummer, version: 1, geaendert: new Date().toISOString() };
-  pruefeKarte(set, karte);
+  pruefeKarte(set, karte, entwurf);
   bildUebernehmen(set.ordner, karte);
   speichereVersion(set.ordner, karte);
   return karte;
 }
 
 // Ändert eine Karte, indem eine neue Version entsteht. Alte Versionen bleiben erhalten.
-function aendereKarte(ordner, nummer, aenderungen) {
+// Standard: die Änderungen werden in die aktuelle Version gemischt. ersetzen: die Angaben ersetzen die Karte ganz (Formular der App).
+function aendereKarte(ordner, nummer, aenderungen, { entwurf = false, ersetzen = false } = {}) {
   const set = ladeSet(ordner);
   const alt = ladeKarte(set.ordner, nummer);
   const { nummer: _n, version: _v, ...rest } = aenderungen;
-  const karte = { ...alt, ...rest, nummer: alt.nummer, version: alt.version + 1, geaendert: new Date().toISOString() };
-  if (rest.bild && alt.bild) karte.bild = { ...alt.bild, ...rest.bild };
-  pruefeKarte(set, karte);
+  const basis = ersetzen ? {} : alt;
+  const karte = { ...basis, ...rest, nummer: alt.nummer, version: alt.version + 1, geaendert: new Date().toISOString() };
+  if (!ersetzen && rest.bild && alt.bild) karte.bild = { ...alt.bild, ...rest.bild };
+  pruefeKarte(set, karte, entwurf);
   bildUebernehmen(set.ordner, karte);
   speichereVersion(set.ordner, karte);
   return karte;

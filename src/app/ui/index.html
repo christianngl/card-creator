@@ -55,9 +55,9 @@
       <h2 id="editorTitel">Neue Karte</h2>
       <select id="version" hidden></select>
     </div>
-    <form id="formKarte"></form>
     <div id="meldung" hidden></div>
-    <div class="aktionen">
+    <form id="formKarte"></form>
+    <div class="aktionen leiste">
       <button id="btnSpeichern" class="primaer">Speichern</button>
       <button id="btnPng" hidden>Als PNG rendern</button>
       <label id="besitzFeld" hidden>Besitz <input id="besitz" type="number" min="0" value="0"></label>
@@ -65,7 +65,7 @@
   </section>
   <section id="vorschau">
     <div class="rahmen"><iframe id="vorschauFrame" title="Vorschau"></iframe></div>
-    <p class="hinweis">Vorschau mit Beschnitt (3 mm Rand wird abgeschnitten)</p>
+    <p class="hinweis">Foto in der Vorschau mit der Maus verschieben, mit dem Mausrad zoomen.<br>Bilddatei auf die Karte ziehen, um sie einzusetzen.</p>
   </section>
 </main>
 
@@ -80,6 +80,7 @@
       </select>
     </label>
     <label class="zeile"><input type="checkbox" name="rueckseiten" checked> Rückseiten mit ausgeben</label>
+    <label class="zeile"><input type="checkbox" name="mitEntwuerfen"> Auch Entwürfe drucken (Karten mit fehlenden Angaben)</label>
     <label>Auflage <input name="auflage" type="number" min="1" value="1"></label>
     <div class="aktionen"><button value="abbrechen">Abbrechen</button><button value="ok" class="primaer">PDF erzeugen</button></div>
   </form>

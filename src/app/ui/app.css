@@ -81,3 +81,5 @@ dialog form { display: flex; flex-direction: column; gap: 10px; }
 dialog .aktionen { justify-content: flex-end; margin-top: 8px; }
 #arbeitet { position: fixed; inset: 0; background: rgba(20, 20, 40, .35); display: flex; align-items: center; justify-content: center; }
 #arbeitet div { background: #fff; padding: 16px 24px; border-radius: 8px; font-weight: 600; }
+#vorschau.ablegen .rahmen { outline: 4px dashed var(--gold); outline-offset: 6px; }
+#editor .leiste { position: sticky; bottom: -16px; margin: 0 -20px -16px; padding: 12px 20px; background: var(--grund); border-top: 1px solid var(--linie); }

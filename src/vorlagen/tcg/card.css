@@ -90,3 +90,28 @@
 .sammel .name{top:80px;width:530px;text-align:center}
 .sammel .win{top:146px;height:500px}
 .sammel .beschr{left:80px;top:668px;width:530px;height:172px;border:2px solid #d6ac4a;border-radius:10px;background:rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;text-align:center;padding:0 22px;font-weight:500;font-size:23px;line-height:1.35;color:#32323c}
+
+/* Goldkarte: Vollbild-Aufbau, Karte und Foto in Gold */
+.card.goldkarte{background:linear-gradient(135deg,#7a5a14 0%,#f6dc8c 22%,#b8862b 45%,#fbe7a1 68%,#8c6a1c 100%)}
+.card.goldkarte::before{background:repeating-linear-gradient(45deg,rgba(255,255,255,.18) 0 2px,transparent 2px 9px),repeating-linear-gradient(-45deg,rgba(90,60,10,.12) 0 1px,transparent 1px 9px);mix-blend-mode:overlay}
+.goldkarte .gold{border-color:#fff6d0}
+.goldkarte .panel{background:linear-gradient(#e8c66a,#b58a2a)}
+.photo.goldton{filter:grayscale(1) sepia(1) saturate(1.7) hue-rotate(-6deg) brightness(1.06) contrast(1.08)}
+.goldkarte .shade{background:linear-gradient(to bottom,rgba(250,228,150,.8) 0%,rgba(250,228,150,0) 22%,rgba(250,228,150,0) 44%,rgba(245,218,135,.9) 76%,rgba(238,208,120,.95) 100%)}
+.full.goldkarte,.full.goldkarte .name,.full.goldkarte .hp,.full.goldkarte .hp small,.full.goldkarte .evo,.full.goldkarte .foot{color:#3a2a06;text-shadow:0 1px 0 rgba(255,246,205,.7)}
+.full.goldkarte .stage{border-color:#8c6a1c}
+.full.goldkarte .atk{border-bottom-color:rgba(90,60,10,.35)}
+.full.goldkarte .atk p{color:#3a2a06}
+.full.goldkarte .ah b,.full.goldkarte .ah i{text-shadow:0 1px 0 rgba(255,246,205,.7)}
+.full.goldkarte .stats small{color:#6b5212}
+.full.goldkarte .flavor{background:rgba(255,248,220,.5);border-color:#8c6a1c;color:#3a2a06}
+
+/* Folien-Effekte (Feld "folie"): im Bild oder über der ganzen Karte */
+.fx{position:absolute;inset:0;pointer-events:none;z-index:1;overflow:hidden}
+.fx svg{position:absolute;inset:0;width:100%;height:100%}
+.card>.fx{z-index:6}
+.fx-glitzer,.fx-sterne{mix-blend-mode:screen}
+.fx-kosmos{mix-blend-mode:hard-light}
+.fx-strahlen{mix-blend-mode:overlay;background:radial-gradient(circle at 50% 38%,rgba(255,255,255,.55),rgba(255,255,255,0) 55%),repeating-conic-gradient(from 0deg at 50% 38%,rgba(255,255,255,.6) 0deg 3deg,rgba(255,240,190,.12) 3deg 8deg,rgba(255,255,255,0) 8deg 15deg)}
+.fx-regenbogen{mix-blend-mode:soft-light;background:repeating-linear-gradient(115deg,#ff7878 0,#ffdc64 40px,#8cff8c 80px,#6ec8ff 120px,#be82ff 160px,#ff78d2 200px,#ff7878 240px)}
+.fx-glanz{mix-blend-mode:overlay;background:linear-gradient(120deg,transparent 18%,rgba(255,255,255,.9) 30%,transparent 38%,transparent 56%,rgba(255,255,255,.75) 63%,transparent 70%)}

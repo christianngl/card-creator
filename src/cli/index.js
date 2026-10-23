@@ -18,12 +18,13 @@ const HILFE = `Card Creator – Kommandozeile (Ausgabe immer JSON)
   set zeigen --set <pfad>
   set aendern --set <pfad> --json <json|datei>   (name, fusszeile, anzahl, rueckseite, typen, seltenheiten, format)
   liste --set <pfad>                          alle Karten mit aktueller Version und Sammlungsstand
-  karte neu --set <pfad> --json <json|datei>  ohne "nummer" die nächste freie Nummer
-  karte aendern --set <pfad> --nr <n> --json <json|datei>   legt eine neue Version an
+  karte neu --set <pfad> --json <json|datei> [--entwurf]   ohne "nummer" die nächste freie Nummer
+  karte aendern --set <pfad> --nr <n> --json <json|datei> [--entwurf]   legt eine neue Version an
+                                              --entwurf speichert auch mit fehlenden Angaben (nur auf Wunsch des Nutzers)
   karte zeigen --set <pfad> --nr <n> [--version <v>]
   karte versionen --set <pfad> --nr <n>
   rendern --set <pfad> [--nr 7|1-12|1,3,5] [--ohne-beschnitt]      PNG nach <set>/export/png/
-  druck --set <pfad> [--nr …] [--modus bogen|einzeln] [--ohne-rueckseiten] [--auflage <n>]
+  druck --set <pfad> [--nr …] [--modus bogen|einzeln] [--ohne-rueckseiten] [--auflage <n>] [--mit-entwuerfen]
                                               PDF nach <set>/export/druck/, vermerkt den Druck in der Sammlung
   sammlung --set <pfad> [--nr <n> --besitz <anzahl>]
 
@@ -135,13 +136,13 @@ async function main(argv) {
       return ausgabe({ ok: true, karten: store.listeKarten(path.resolve(opt.set)) });
     case 'karte neu': {
       brauche(opt, 'set', 'json');
-      const k = store.neueKarte(opt.set, json(opt.json));
-      return ausgabe({ ok: true, nummer: k.nummer, version: k.version, name: k.name, status: 'gespeichert', hinweis: 'Mit "rendern --nr" als PNG erzeugen.', offene_punkte: [] });
+      const k = store.neueKarte(opt.set, json(opt.json), { entwurf: !!opt.entwurf });
+      return ausgabe({ ok: true, nummer: k.nummer, version: k.version, name: k.name, status: k.entwurf ? 'entwurf' : 'gespeichert', hinweis: 'Mit "rendern --nr" als PNG erzeugen.', offene_punkte: k.offene_punkte || [] });
     }
     case 'karte aendern': {
       brauche(opt, 'set', 'nr', 'json');
-      const k = store.aendereKarte(opt.set, zahl(opt.nr, 'nr'), json(opt.json));
-      return ausgabe({ ok: true, nummer: k.nummer, version: k.version, name: k.name, status: 'gespeichert', offene_punkte: [] });
+      const k = store.aendereKarte(opt.set, zahl(opt.nr, 'nr'), json(opt.json), { entwurf: !!opt.entwurf });
+      return ausgabe({ ok: true, nummer: k.nummer, version: k.version, name: k.name, status: k.entwurf ? 'entwurf' : 'gespeichert', offene_punkte: k.offene_punkte || [] });
     }
     case 'karte zeigen':
       brauche(opt, 'set', 'nr');
@@ -161,6 +162,7 @@ async function main(argv) {
         modus: opt.modus || 'bogen',
         rueckseiten: !opt['ohne-rueckseiten'],
         auflage: opt.auflage ? zahl(opt.auflage, 'auflage') : 1,
+        mitEntwuerfen: !!opt['mit-entwuerfen'],
       } });
       return ausgabe({ ok: true, ...ergebnis, hinweis: 'Die Übergabe an den Druckdienst macht der Mensch.' });
     }

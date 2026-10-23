@@ -26,7 +26,7 @@ function merke(ordner) {
 function setInfo(ordner) {
   const set = store.ladeSet(ordner);
   const v = vorlage(set.vorlage);
-  return { set, vorlage: { id: v.id, name: v.name, layouts: v.layouts, felder: v.felder } };
+  return { set, vorlage: { id: v.id, name: v.name, layouts: v.layouts, felder: v.felder, folien: v.folien || {} } };
 }
 
 let fenster;
@@ -63,8 +63,10 @@ bediene('set:aendern', (ordner, aenderungen) => {
 });
 bediene('karten:liste', (ordner) => store.listeKarten(ordner));
 bediene('karte:laden', (ordner, nr, version) => ({ karte: store.ladeKarte(ordner, nr, version), versionen: store.versionen(ordner, nr), sammlung: store.ladeSammlung(ordner)[nr] || {} }));
-bediene('karte:neu', (ordner, daten) => store.neueKarte(ordner, daten));
-bediene('karte:aendern', (ordner, nr, daten) => store.aendereKarte(ordner, nr, daten));
+// Die App speichert immer, notfalls als Entwurf. Das Formular liefert die ganze Karte, daher "ersetzen".
+bediene('karte:neu', (ordner, daten) => store.neueKarte(ordner, daten, { entwurf: true }));
+bediene('karte:aendern', (ordner, nr, daten) => store.aendereKarte(ordner, nr, daten, { entwurf: true, ersetzen: true }));
+bediene('bild:importieren', (ordner, pfad) => store.importiereBild(ordner, pfad));
 bediene('bild:waehlen', async (ordner) => {
   const r = await dialog.showOpenDialog(fenster, { title: 'Bild wählen', properties: ['openFile'], filters: [{ name: 'Bilder', extensions: ['jpg', 'jpeg', 'png', 'webp', 'gif'] }] });
   return r.canceled ? null : store.importiereBild(ordner, r.filePaths[0]);

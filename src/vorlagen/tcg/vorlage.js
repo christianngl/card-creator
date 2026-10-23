@@ -28,20 +28,32 @@ const STANDARD_SELTENHEITEN = [
 const LAYOUTS = {
   normal: { titel: 'Normal (Fotofenster oben)', kartentyp: 'spielkarte' },
   vollbild: { titel: 'Vollbild (Foto über die ganze Karte)', kartentyp: 'spielkarte' },
+  gold: { titel: 'Goldkarte (Vollbild in Gold)', kartentyp: 'spielkarte' },
   trainer: { titel: 'Trainer (Effektkarte)', kartentyp: 'spielkarte' },
   sammel: { titel: 'Sammelkarte (Bild, Name, Beschreibung)', kartentyp: 'sammelkarte' },
+};
+
+// Folien-Effekte wie bei Holo-Karten. Statisch gezeichnet, damit sie genau so gedruckt werden.
+const FOLIEN = {
+  glitzer: 'Glitzer (feine Funken)',
+  sterne: 'Sterne (Sternchen mit Leuchten)',
+  strahlen: 'Strahlen (Sonnenstrahlen)',
+  kosmos: 'Kosmos (schimmernde Kreise)',
+  regenbogen: 'Regenbogen-Folie',
+  glanz: 'Glanz (Lichtstreifen)',
 };
 
 // Feldbeschreibung für "card-creator vorlage zeigen" und die Oberfläche
 const FELDER = {
   alle: {
-    layout: 'normal | vollbild | trainer | sammel',
+    layout: 'normal | vollbild | gold | trainer | sammel',
     name: 'Text (Pflicht)',
     namensgroesse: 'Zahl in px, optional (sonst automatisch passend)',
     bild: '{ datei, skalierung (>= 1), x, y (Verschiebung in %) } – datei relativ zum Set-Ordner oder absoluter Pfad (wird ins Set kopiert)',
     bildquelle: 'foto | ki (Pflicht)',
     seltenheit: 'Name einer Seltenheit des Sets (Pflicht, wenn das Set Seltenheiten hat)',
     holo: 'true | false – Regenbogen-/Holo-Rahmen',
+    folie: `{ art: ${Object.keys(FOLIEN).join(' | ')}, bereich: bild | karte, staerke: 0.1–1 } – Effekt über Bild oder Karte, optional`,
     flavor: 'Text, optional',
   },
   normal: {
@@ -56,6 +68,7 @@ const FELDER = {
     rueckzug: 'Zahl 0–5, optional',
   },
   vollbild: 'wie normal, ohne band',
+  gold: 'wie vollbild, dazu goldton: true | false (Foto in Gold eingefärbt, Standard true)',
   trainer: {
     untertyp: 'Text, z. B. UNTERSTÜTZER, optional',
     effekt: 'Text (Pflicht)',
@@ -88,8 +101,9 @@ function pruefe(set, karte) {
     else if (!set.seltenheiten.some((s) => s.name === karte.seltenheit)) offen.push(`seltenheit: unbekannt (${karte.seltenheit})`);
   }
   if (karte.typ && !typVon(set, karte.typ)) offen.push(`typ: unbekannt (${karte.typ})`);
+  if (karte.folie && karte.folie.art && !FOLIEN[karte.folie.art]) offen.push(`folie.art: eines von ${Object.keys(FOLIEN).join(', ')}`);
 
-  if (karte.layout === 'normal' || karte.layout === 'vollbild') {
+  if (['normal', 'vollbild', 'gold'].includes(karte.layout)) {
     if (leer(karte.stufe)) offen.push('stufe');
     if (leer(karte.kp)) offen.push('kp');
     if (leer(karte.typ)) offen.push('typ');
@@ -118,14 +132,68 @@ function energie(set, name) {
   return t ? `<span class="e ${slug(t.name)}">${esc(t.symbol)}</span>` : '';
 }
 
-function foto(karte, bildUrl) {
+function foto(karte, bildUrl, extraKlasse = '') {
   const b = karte.bild || {};
   const url = b.datei ? bildUrl(b.datei) : null;
-  if (!url) return '<div class="photo fehlt">Bild fehlt</div>';
+  if (!url) return '<div class="photo fehlt">Bild hierher ziehen</div>';
   const s = Number(b.skalierung) || 1;
   const x = Number(b.x) || 0;
   const y = Number(b.y) || 0;
-  return `<img class="photo" src="${esc(url)}" style="transform:translate(${x}%,${y}%) scale(${s})" alt="">`;
+  return `<img class="photo${extraKlasse}" src="${esc(url)}" style="transform:translate(${x}%,${y}%) scale(${s})" alt="">`;
+}
+
+// Zufallszahlen mit festem Startwert, damit eine Karte bei jedem Rendern gleich aussieht
+function zufall(startwert) {
+  let a = 0;
+  for (const c of String(startwert)) a = (Math.imul(a, 31) + c.charCodeAt(0)) | 0;
+  return () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function svg(inhalt, defs = '') {
+  return `<svg viewBox="0 0 690 940" preserveAspectRatio="xMidYMid slice"><defs>${defs}</defs>${inhalt}</svg>`;
+}
+
+function stern(x, y, r) {
+  const i = r * 0.22;
+  return `M${x},${y - r}L${x + i},${y - i}L${x + r},${y}L${x + i},${y + i}L${x},${y + r}L${x - i},${y + i}L${x - r},${y}L${x - i},${y - i}Z`;
+}
+
+// Zeichnet den Folien-Effekt. Glitzer, Sterne und Kosmos als SVG, der Rest über CSS-Verläufe (card.css)
+function folieHtml(karte) {
+  const f = karte.folie;
+  if (!f || !FOLIEN[f.art]) return '';
+  const r = zufall(`${karte.nummer || 0}-${f.art}`);
+  const farben = ['#ffffff', '#fff3b0', '#ffd6f5', '#c8f0ff', '#d8ffd0', '#f6dc8c'];
+  let inhalt = '';
+  if (f.art === 'glitzer') {
+    const punkte = [];
+    for (let i = 0; i < 1100; i++) {
+      punkte.push(`<circle cx="${(r() * 690).toFixed(1)}" cy="${(r() * 940).toFixed(1)}" r="${(0.9 + r() * r() * 3.2).toFixed(2)}" fill="${farben[Math.floor(r() * farben.length)]}" opacity="${(0.35 + r() * 0.65).toFixed(2)}"/>`);
+    }
+    inhalt = svg(punkte.join(''));
+  } else if (f.art === 'sterne') {
+    const sterne = [];
+    for (let i = 0; i < 46; i++) {
+      const groesse = 5 + Math.pow(r(), 2.2) * 22;
+      sterne.push(`<path d="${stern(r() * 690, r() * 940, groesse)}" fill="${farben[Math.floor(r() * farben.length)]}" opacity="${(0.55 + r() * 0.45).toFixed(2)}" filter="url(#leuchten)"/>`);
+    }
+    inhalt = svg(sterne.join(''), '<filter id="leuchten" x="-1" y="-1" width="3" height="3"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>');
+  } else if (f.art === 'kosmos') {
+    const farbtoene = ['#ff9de2', '#9de7ff', '#fff59d', '#b9ff9d', '#c9a6ff'];
+    const kreise = [];
+    for (let i = 0; i < 70; i++) {
+      const c = farbtoene[Math.floor(r() * farbtoene.length)];
+      kreise.push(`<circle cx="${(r() * 690).toFixed(1)}" cy="${(r() * 940).toFixed(1)}" r="${(6 + Math.pow(r(), 1.8) * 46).toFixed(1)}" fill="url(#kreis)" stroke="${c}" stroke-width="1.5" style="color:${c}" opacity="${(0.4 + r() * 0.5).toFixed(2)}"/>`);
+    }
+    inhalt = svg(kreise.join(''), '<radialGradient id="kreis"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset=".6" stop-color="currentColor" stop-opacity=".35"/><stop offset="1" stop-color="currentColor" stop-opacity=".05"/></radialGradient>');
+  }
+  const staerke = Math.max(0.1, Math.min(1, Number(f.staerke) || 0.7));
+  return `<div class="fx fx-${f.art}" style="opacity:${staerke}">${inhalt}</div>`;
 }
 
 function fusszeile(set, karte, gesamt) {
@@ -145,15 +213,18 @@ function name(karte, extraStil = '') {
 // Liefert das Markup einer Karte (ein .card-Element). bildUrl wandelt einen Bildpfad des Sets in eine URL um.
 function karteHtml(set, karte, { bildUrl, gesamt }) {
   const typ = typVon(set, karte.typ);
-  const klassen = ['card', { normal: 'normal', vollbild: 'full', trainer: 'trainer', sammel: 'sammel' }[karte.layout] || 'normal'];
+  const klassen = ['card', { normal: 'normal', vollbild: 'full', gold: 'full goldkarte', trainer: 'trainer', sammel: 'sammel' }[karte.layout] || 'normal'];
   if (typ) klassen.push(`ty-${slug(typ.name)}`);
   if (karte.holo) klassen.push('holo');
   const teile = ['<div class="gold"></div>'];
+  const folie = folieHtml(karte);
+  const folieImBild = folie && (karte.folie.bereich || 'bild') === 'bild' ? folie : '';
 
-  if (karte.layout === 'vollbild') {
-    teile.push(`<div class="panel">${foto(karte, bildUrl)}<div class="shade"></div></div>`);
+  if (karte.layout === 'vollbild' || karte.layout === 'gold') {
+    const goldton = karte.layout === 'gold' && karte.goldton !== false ? ' goldton' : '';
+    teile.push(`<div class="panel">${foto(karte, bildUrl, goldton)}${folieImBild}<div class="shade"></div></div>`);
   } else {
-    teile.push('<div class="panel"></div>', `<div class="win">${foto(karte, bildUrl)}</div>`);
+    teile.push('<div class="panel"></div>', `<div class="win">${foto(karte, bildUrl)}${folieImBild}</div>`);
   }
 
   if (karte.layout === 'trainer') {
@@ -167,7 +238,8 @@ function karteHtml(set, karte, { bildUrl, gesamt }) {
     if (karte.beschreibung) teile.push(`<div class="beschr">${absatz(karte.beschreibung)}</div>`);
   } else {
     const evo = karte.entwickelt_aus ? `<span class="evo">entwickelt sich aus ${esc(karte.entwickelt_aus)}</span>` : '';
-    teile.push(`<div class="top"><span class="stage">${esc(karte.stufe)}</span>${evo}</div>`);
+    const stufe = karte.stufe ? `<span class="stage">${esc(karte.stufe)}</span>` : '';
+    teile.push(`<div class="top">${stufe}${evo}</div>`);
     teile.push(name(karte));
     teile.push(`<div class="hp"><small>KP</small>${esc(karte.kp)}</div>`);
     if (typ) teile.push(`<div class="energy">${esc(typ.symbol)}</div>`);
@@ -184,6 +256,7 @@ function karteHtml(set, karte, { bildUrl, gesamt }) {
 
   if (karte.flavor && karte.layout !== 'sammel') teile.push(`<div class="flavor">${absatz(karte.flavor)}</div>`);
   teile.push(fusszeile(set, karte, gesamt));
+  if (folie && !folieImBild) teile.push(folie);
   return `<div class="${klassen.join(' ')}">${teile.join('')}</div>`;
 }
 
@@ -202,6 +275,7 @@ module.exports = {
   raster: { breite: 690, hoehe: 940, pxProMm: 10 },
   formate: [{ breite: 63, hoehe: 88, beschnitt: 3 }],
   layouts: LAYOUTS,
+  folien: FOLIEN,
   felder: FELDER,
   standard: { typen: STANDARD_TYPEN, seltenheiten: STANDARD_SELTENHEITEN },
   pruefe,

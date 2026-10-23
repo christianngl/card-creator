@@ -101,7 +101,7 @@ async function ladeListe() {
   const karten = await rufe('karten:liste', zustand.info.set.ordner);
   $('#karten').innerHTML = karten.map((k) => `<li data-nr="${k.nummer}" class="${k.nummer === zustand.nr ? 'aktiv' : ''}">
     <span class="nr">${String(k.nummer).padStart(3, '0')}</span><span class="name">${esc(k.name)}</span>
-    <span class="info">v${k.version}${k.besitz ? ` · ${k.besitz}×` : ''}${k.gedruckt ? ' · gedruckt' : ''}</span></li>`).join('')
+    <span class="info">${k.entwurf ? 'Entwurf · ' : ''}v${k.version}${k.besitz ? ` · ${k.besitz}×` : ''}${k.gedruckt ? ' · gedruckt' : ''}</span></li>`).join('')
     || '<li class="hinweis">Noch keine Karten.</li>';
   $('#karten').querySelectorAll('li[data-nr]').forEach((li) => { li.onclick = () => waehleKarte(Number(li.dataset.nr)); });
 }
@@ -127,6 +127,7 @@ $('#dlgDruck').onclose = async () => {
       modus: f.get('modus'),
       rueckseiten: f.get('rueckseiten') === 'on',
       auflage: Number(f.get('auflage')) || 1,
+      mitEntwuerfen: f.get('mitEntwuerfen') === 'on',
     }));
     meldung('ok', `PDF mit ${r.seiten} Seiten erzeugt. Die Übergabe an den Druckdienst machst du selbst.`, [], { text: 'Datei zeigen', fn: () => rufe('datei:zeigen', r.pdf) });
     await ladeListe();
@@ -197,6 +198,7 @@ async function waehleKarte(nr, version) {
     $('#besitz').value = r.sammlung.besitz || 0;
     keineMeldung();
     if (r.karte.version !== aktuell) meldung('ok', `Du siehst Version ${r.karte.version}. Speichern legt daraus eine neue Version an.`);
+    else if (r.karte.entwurf) meldung('fehler', 'Entwurf – es fehlen noch Angaben:', r.karte.offene_punkte || []);
     baueFormular();
     ladeListe();
   } catch (e) { fehler(e); }
@@ -225,7 +227,8 @@ $('#btnSpeichern').onclick = async () => {
       ? await rufe('karte:aendern', zustand.info.set.ordner, zustand.nr, daten)
       : await rufe('karte:neu', zustand.info.set.ordner, daten);
     await waehleKarte(k.nummer);
-    meldung('ok', `Gespeichert als Version ${k.version}.`);
+    if (k.entwurf) meldung('fehler', `Als Entwurf gespeichert (Version ${k.version}). Es fehlen noch:`, k.offene_punkte || []);
+    else meldung('ok', `Gespeichert als Version ${k.version}.`);
   } catch (e) {
     meldung('fehler', e.message, e.offene_punkte || []);
   }
@@ -258,17 +261,25 @@ function baueFormular() {
     auswahl('layout', 'Layout', layoutsDesSets().map(([id, l]) => [id, l.titel])),
     feld('name', 'Name'),
     `<fieldset><legend>Bild</legend>
-      <div class="bildzeile ganz"><span class="dateiname">${esc(b.datei || 'kein Bild gewählt')}</span><button type="button" id="btnBild">Bild wählen …</button></div>
+      <div class="bildzeile ganz"><span class="dateiname">${esc(b.datei || 'kein Bild – Datei auf die Karte ziehen')}</span><button type="button" id="btnBild">Bild wählen …</button></div>
       <label>Zoom <input type="range" data-bild="skalierung" min="1" max="3" step="0.01" value="${b.skalierung || 1}"></label>
       ${auswahl('bildquelle', 'Bildquelle', [['foto', 'eigenes Foto'], ['ki', 'KI-generiert']])}
-      <label>Verschieben waagrecht <input type="range" data-bild="x" min="-50" max="50" step="0.5" value="${b.x || 0}"></label>
-      <label>Verschieben senkrecht <input type="range" data-bild="y" min="-50" max="50" step="0.5" value="${b.y || 0}"></label>
+      <label>Verschieben waagrecht <input type="range" data-bild="x" min="-100" max="100" step="0.5" value="${b.x || 0}"></label>
+      <label>Verschieben senkrecht <input type="range" data-bild="y" min="-100" max="100" step="0.5" value="${b.y || 0}"></label>
     </fieldset>`,
   ];
   if (seltenheiten.length) teile.push(auswahl('seltenheit', 'Seltenheit', seltenheiten, { leer: true }));
   teile.push(`<label class="zeile"><input type="checkbox" data-feld="holo" ${k.holo ? 'checked' : ''}> Holo-/Regenbogen-Rahmen</label>`);
+  const folie = k.folie || {};
+  const folien = Object.entries(zustand.info.vorlage.folien || {});
+  teile.push(`<fieldset><legend>Effekt (Folie)</legend>
+      <label>Art<select data-folie="art"><option value="">kein Effekt</option>${folien.map(([id, t]) => `<option value="${id}" ${folie.art === id ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select></label>
+      <label>Bereich<select data-folie="bereich"><option value="bild">nur Bild</option><option value="karte" ${folie.bereich === 'karte' ? 'selected' : ''}>ganze Karte</option></select></label>
+      <label class="ganz">Stärke <input type="range" data-folie="staerke" min="0.1" max="1" step="0.05" value="${folie.staerke || 0.7}"></label>
+    </fieldset>`);
 
-  if (k.layout === 'normal' || k.layout === 'vollbild') {
+  if (['normal', 'vollbild', 'gold'].includes(k.layout)) {
+    if (k.layout === 'gold') teile.push(`<label class="zeile ganz"><input type="checkbox" data-feld="goldton" ${k.goldton !== false ? 'checked' : ''}> Foto in Gold einfärben</label>`);
     teile.push(feld('stufe', 'Stufe', { hinweis: 'z. B. Basis, Phase 1' }), feld('entwickelt_aus', 'Entwickelt sich aus'),
       feld('kp', 'KP', { typ: 'number' }), auswahl('typ', 'Typ', typen, { leer: true }));
     if (k.layout === 'normal') teile.push(feld('band', 'Band unter dem Foto', { ganz: true }));
@@ -304,7 +315,11 @@ function baueFormular() {
       baueFormular();
     } catch (e) { fehler(e); }
   };
-  form.oninput = () => { clearTimeout(zustand.timer); zustand.timer = setTimeout(aktualisiereVorschau, 200); };
+  form.oninput = (e) => {
+    if (e.target.dataset.bild !== undefined) return zeigeBildausschnitt();
+    clearTimeout(zustand.timer);
+    zustand.timer = setTimeout(aktualisiereVorschau, 150);
+  };
   aktualisiereVorschau();
 }
 
@@ -317,6 +332,9 @@ function leseFormular() {
     else if (el.value.trim() !== '') k[name] = el.type === 'number' ? Number(el.value) : el.value;
   });
   form.querySelectorAll('[data-bild]').forEach((el) => { k.bild[el.dataset.bild] = Number(el.value); });
+  const folie = {};
+  form.querySelectorAll('[data-folie]').forEach((el) => { folie[el.dataset.folie] = el.dataset.folie === 'staerke' ? Number(el.value) : el.value; });
+  if (folie.art) k.folie = folie;
   const atk = [];
   form.querySelectorAll('[data-atk]').forEach((el) => {
     const i = Number(el.dataset.atk);
@@ -327,7 +345,7 @@ function leseFormular() {
     else atk[i][el.dataset.teil] = el.dataset.teil === 'schaden' && /^\d+$/.test(v) ? Number(v) : v;
   });
   const gefuellt = atk.filter((a) => a && Object.keys(a).length);
-  if (k.layout === 'normal' || k.layout === 'vollbild') k.attacken = gefuellt;
+  if (['normal', 'vollbild', 'gold'].includes(k.layout)) k.attacken = gefuellt;
   return k;
 }
 
@@ -338,5 +356,95 @@ async function aktualisiereVorschau() {
     $('#vorschauFrame').srcdoc = await rufe('vorschau', zustand.info.set.ordner, karte);
   } catch (e) { fehler(e); }
 }
+
+// ---------- Foto direkt in der Vorschau bewegen ----------
+
+function bildRegler() {
+  const r = {};
+  $('#formKarte').querySelectorAll('[data-bild]').forEach((el) => { r[el.dataset.bild] = el; });
+  return r;
+}
+
+// Überträgt die Reglerwerte sofort auf das Foto in der Vorschau
+function zeigeBildausschnitt() {
+  const doc = $('#vorschauFrame').contentDocument;
+  const img = doc && doc.querySelector('img.photo');
+  const r = bildRegler();
+  if (img && r.x) img.style.transform = `translate(${r.x.value}%,${r.y.value}%) scale(${r.skalierung.value})`;
+}
+
+// Maus in der Vorschau: Foto ziehen zum Verschieben, Mausrad zum Zoomen
+function verbindeVorschau() {
+  const doc = $('#vorschauFrame').contentDocument;
+  if (!doc || !doc.body) return;
+  verbindeDrop(doc);
+  const img = doc.querySelector('img.photo');
+  if (!img) return;
+  const rahmen = img.parentElement;
+  const imRahmen = (e) => {
+    const b = rahmen.getBoundingClientRect();
+    return e.clientX >= b.left && e.clientX <= b.right && e.clientY >= b.top && e.clientY <= b.bottom;
+  };
+  let start = null;
+  doc.addEventListener('mousedown', (e) => {
+    if (e.button !== 0 || !imRahmen(e)) return;
+    const r = bildRegler();
+    start = { x: e.clientX, y: e.clientY, bx: Number(r.x.value), by: Number(r.y.value) };
+    doc.body.style.cursor = 'grabbing';
+    e.preventDefault();
+  });
+  doc.addEventListener('mousemove', (e) => {
+    if (!start) {
+      doc.body.style.cursor = imRahmen(e) ? 'grab' : '';
+      return;
+    }
+    const r = bildRegler();
+    r.x.value = start.bx + ((e.clientX - start.x) / rahmen.clientWidth) * 100;
+    r.y.value = start.by + ((e.clientY - start.y) / rahmen.clientHeight) * 100;
+    zeigeBildausschnitt();
+  });
+  const ende = () => { start = null; doc.body.style.cursor = ''; };
+  doc.addEventListener('mouseup', ende);
+  doc.addEventListener('mouseleave', ende);
+  doc.addEventListener('wheel', (e) => {
+    if (!imRahmen(e)) return;
+    e.preventDefault();
+    const r = bildRegler();
+    r.skalierung.value = Math.min(3, Math.max(1, Number(r.skalierung.value) - e.deltaY * 0.0015));
+    zeigeBildausschnitt();
+  }, { passive: false });
+}
+
+$('#vorschauFrame').addEventListener('load', verbindeVorschau);
+
+// ---------- Bild per Drag & Drop ----------
+
+async function setzeBildAusDatei(datei) {
+  if (!zustand.info || !zustand.karte || !datei) return;
+  if (!/^image\//.test(datei.type)) return meldung('fehler', 'Bitte eine Bilddatei (JPG, PNG, WebP) ablegen.');
+  try {
+    const rel = await rufe('bild:importieren', zustand.info.set.ordner, window.cc.pfadVon(datei));
+    zustand.karte = leseFormular();
+    zustand.karte.bild = { datei: rel, skalierung: 1, x: 0, y: 0 };
+    baueFormular();
+  } catch (e) { fehler(e); }
+}
+
+function verbindeDrop(ziel) {
+  const markiere = (an) => $('#vorschau').classList.toggle('ablegen', an);
+  ziel.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; markiere(true); });
+  ziel.addEventListener('dragleave', () => markiere(false));
+  ziel.addEventListener('drop', (e) => {
+    e.preventDefault();
+    markiere(false);
+    setzeBildAusDatei(e.dataTransfer.files[0]);
+  });
+}
+
+verbindeDrop($('#vorschau'));
+verbindeDrop($('#editor'));
+// Dateien, die daneben fallen, sollen die App nicht verlassen
+document.addEventListener('dragover', (e) => e.preventDefault());
+document.addEventListener('drop', (e) => e.preventDefault());
 
 zeigeStart();

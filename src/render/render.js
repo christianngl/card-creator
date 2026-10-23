@@ -156,7 +156,8 @@ function einzelSeiten(bilder, rueckseite, k) {
 }
 
 // Erzeugt ein Druck-PDF nach export/druck/. modus "bogen" = A4 mit Schnittmarken, "einzeln" = eine Karte pro Seite
-async function druckePdf(ordner, { nr, modus = 'bogen', rueckseiten = true, auflage = 1 } = {}) {
+// mitEntwuerfen: auch Karten drucken, denen noch Angaben fehlen
+async function druckePdf(ordner, { nr, modus = 'bogen', rueckseiten = true, auflage = 1, mitEntwuerfen = false } = {}) {
   if (!['bogen', 'einzeln'].includes(modus)) throw new store.Fehler('modus muss bogen oder einzeln sein.', 'pflichtfelder_fehlen', ['modus']);
   const set = store.ladeSet(ordner);
   const m = masse(set);
@@ -165,6 +166,11 @@ async function druckePdf(ordner, { nr, modus = 'bogen', rueckseiten = true, aufl
   try {
     const karten = store.waehleNummern(set.ordner, nr).map((n) => store.ladeKarte(set.ordner, n));
     if (!karten.length) throw new store.Fehler('Das Set hat noch keine Karten.', 'karte_fehlt');
+    const entwuerfe = karten.filter((k) => k.entwurf);
+    if (entwuerfe.length && !mitEntwuerfen) {
+      throw new store.Fehler('Einige Karten sind noch Entwürfe. Vervollständigen oder ausdrücklich mitdrucken.', 'entwuerfe',
+        entwuerfe.map((k) => `${k.nummer} ${k.name || ''}: ${(k.offene_punkte || []).join(', ')}`));
+    }
     const urls = [];
     for (const karte of karten) {
       const datei = path.join(temp, `${store.nr3(karte.nummer)}.png`);

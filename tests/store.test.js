@@ -108,3 +108,40 @@ test('Texte werden in der Kartenseite maskiert', () => {
   assert.ok(!html.includes('<script>x</script>'));
   assert.match(html, /&lt;script&gt;x&lt;\/script&gt;/);
 });
+
+test('Entwurf: fehlende Angaben werden gespeichert und als offen markiert', () => {
+  const { ordner } = neuesSet();
+  const k = store.neueKarte(ordner, { name: 'Halbfertig' }, { entwurf: true });
+  assert.equal(k.entwurf, true);
+  assert.equal(k.layout, 'normal');
+  assert.ok(k.offene_punkte.includes('kp'));
+  assert.equal(store.listeKarten(ordner)[0].entwurf, true);
+});
+
+test('Entwurf wird vollständig, sobald alle Angaben da sind', () => {
+  const { ordner, bild } = neuesSet();
+  store.neueKarte(ordner, { name: 'Halbfertig' }, { entwurf: true });
+  const k = store.aendereKarte(ordner, 1, spielkarte(bild), { entwurf: true });
+  assert.equal(k.entwurf, undefined);
+  assert.equal(k.offene_punkte, undefined);
+});
+
+test('Ersetzen übernimmt geleerte Felder (Formular der App)', () => {
+  const { ordner, bild } = neuesSet();
+  store.neueKarte(ordner, spielkarte(bild, { flavor: 'Alt' }));
+  const { flavor, ...ohneFlavor } = store.ladeKarte(ordner, 1);
+  const k = store.aendereKarte(ordner, 1, ohneFlavor, { ersetzen: true });
+  assert.equal(k.flavor, undefined);
+});
+
+test('Goldkarte und Folien-Effekte erscheinen im Markup', () => {
+  const { ordner, bild } = neuesSet();
+  const gold = store.neueKarte(ordner, spielkarte(bild, { layout: 'gold', folie: { art: 'sterne', bereich: 'karte', staerke: 0.5 } }));
+  const html = karteSeite(store.ladeSet(ordner), gold);
+  assert.match(html, /class="card full goldkarte/);
+  assert.match(html, /photo goldton/);
+  assert.match(html, /class="fx fx-sterne" style="opacity:0.5"/);
+  // gleicher Effekt bei jedem Rendern
+  assert.equal(html, karteSeite(store.ladeSet(ordner), gold));
+  assert.throws(() => store.neueKarte(ordner, spielkarte(bild, { folie: { art: 'feuerwerk' } })), (e) => e.offene_punkte.some((p) => p.startsWith('folie.art')));
+});

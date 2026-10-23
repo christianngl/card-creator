@@ -60,3 +60,14 @@ test('Unbekannter Befehl liefert einen Fehler', () => {
   assert.equal(r.ok, false);
   assert.equal(r.exit, 1);
 });
+
+test('Entwurf nur mit --entwurf, Druck verweigert Entwürfe ohne --mit-entwuerfen', () => {
+  const r = cli('karte', 'neu', '--set', ordner, '--json', '{"name":"Skizze"}', '--entwurf');
+  assert.equal(r.ok, true);
+  assert.equal(r.status, 'entwurf');
+  assert.ok(r.offene_punkte.length > 0);
+  const d = cli('druck', '--set', ordner, '--nr', String(r.nummer));
+  assert.equal(d.ok, false);
+  assert.equal(d.code, 'entwuerfe');
+  assert.equal(cli('druck', '--set', ordner, '--nr', String(r.nummer), '--mit-entwuerfen', '--modus', 'einzeln').ok, true);
+});
