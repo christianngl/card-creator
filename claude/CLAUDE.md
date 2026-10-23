@@ -98,6 +98,7 @@ node src/cli/index.js liste --set <pfad>
 node src/cli/index.js karte neu --set <pfad> --json <json|datei> [--entwurf]
 node src/cli/index.js karte aendern --set <pfad> --nr 7 --json '{"kp":70}' [--entwurf]
 node src/cli/index.js karte zeigen|versionen --set <pfad> --nr 7 [--version 1]
+node src/cli/index.js karte kopieren --set <pfad> --nr 7 [--version 1] [--neue-nr 15]   als neue Karte kopieren, z. B. als Goldvariante
 node src/cli/index.js karte stil --set <pfad> --von 3 --nr 4-10      Stil (Layout derselben Art, Effekt, Format, Holo, Goldton) übertragen, je Karte neue Version
 node src/cli/index.js rendern --set <pfad> [--nr 1-12] [--ohne-beschnitt]
 node src/cli/index.js druck --set <pfad> [--nr …] [--modus bogen|einzeln] [--ohne-rueckseiten] [--auflage 2] [--mit-entwuerfen]
@@ -144,6 +145,7 @@ Unter Windows mit der Bash von Claude Code Pfade mit Laufwerksbuchstaben und `/`
 | `effekt` | trainer | ja | dazu optional `untertyp`, `regel`, `flavor` |
 | `beschreibung`, `typ` | sammel | nein | |
 | `kommentar` | alle | nein | Notiz für spätere Bearbeitungen und Ideen, erscheint nicht auf der Karte |
+| `kopiert_von` | alle | nein | `{nummer, version}`, setzt `karte kopieren` |
 
 **Entwürfe:** Die App speichert immer, auch wenn Angaben fehlen. Die Karte bekommt dann `entwurf: true` und `offene_punkte`. Drucken lassen sich Entwürfe nur mit ausdrücklicher Zustimmung (`--mit-entwuerfen` bzw. Häkchen im Druckdialog). Die Kommandozeile speichert Entwürfe nur mit `--entwurf`.
 

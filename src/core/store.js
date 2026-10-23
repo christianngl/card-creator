@@ -243,6 +243,16 @@ function aendereKarte(ordner, nummer, aenderungen, { entwurf = false, ersetzen =
   return karte;
 }
 
+// Kopiert eine Karte (aktuelle oder gewählte Version) als neue Karte, z. B. um dieselbe Karte als normale und als Goldkarte
+// im Set zu haben. Die Kopie startet bei Version 1 und merkt sich ihr Vorbild in "kopiert_von". Die Sammlung wird nicht kopiert.
+function kopiereKarte(ordner, nummer, { version, neueNummer } = {}) {
+  const set = ladeSet(ordner);
+  const quelle = ladeKarte(set.ordner, nummer, version);
+  const { nummer: _n, version: _v, geaendert: _g, kopiert_von: _k, ...inhalt } = quelle;
+  // War das Vorbild ein Entwurf, ist es die Kopie auch. Erfunden wird dabei nichts.
+  return neueKarte(set.ordner, { ...inhalt, nummer: neueNummer, kopiert_von: { nummer: quelle.nummer, version: quelle.version } }, { entwurf: true });
+}
+
 // Überträgt den Stil (Layout innerhalb der Familie, Effekt, Format, Holo, Goldton) der aktuellen Version von quelle
 // auf andere Karten. Jede geänderte Karte bekommt eine neue Version, Karten ohne Unterschied bleiben unverändert.
 function uebertrageStil(ordner, quelle, ziele) {
@@ -316,6 +326,7 @@ module.exports = {
   nummern,
   neueKarte,
   aendereKarte,
+  kopiereKarte,
   uebertrageStil,
   importiereBild,
   ladeSammlung,

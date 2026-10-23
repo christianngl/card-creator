@@ -3,7 +3,7 @@ const { contextBridge, ipcRenderer, webUtils } = require('electron');
 
 const KANAELE = [
   'set:liste', 'set:vergessen', 'vorlage:standard', 'set:waehleOrdner', 'set:neu', 'set:oeffnen', 'set:aendern',
-  'karten:liste', 'karte:laden', 'karte:neu', 'karte:aendern', 'karte:stil',
+  'karten:liste', 'karte:laden', 'karte:neu', 'karte:aendern', 'karte:kopieren', 'karte:stil',
   'bild:waehlen', 'bild:importieren', 'vorschau', 'vorschau:bild', 'vorschau:rueckseite', 'sammlung:besitz',
   'export:png', 'export:druck', 'ordner:zeigen', 'datei:zeigen',
 ];

@@ -209,3 +209,25 @@ test('Stil übertragen: Layout derselben Art, Effekt und Format, Inhalte bleiben
   assert.equal(store.ladeKarte(ordner, 2).folie, undefined);
   assert.equal(store.ladeKarte(ordner, 2).layout, 'normal');
 });
+
+test('Karte kopieren: neue Nummer, gleiche Inhalte, Version 1', () => {
+  const { ordner, bild } = neuesSet();
+  store.neueKarte(ordner, spielkarte(bild, { name: 'Original', kommentar: 'Notiz' }));
+  store.aendereKarte(ordner, 1, { kp: 90 });
+  const k = store.kopiereKarte(ordner, 1);
+  assert.equal(k.nummer, 2);
+  assert.equal(k.version, 1);
+  assert.equal(k.name, 'Original');
+  assert.equal(k.kp, 90);
+  assert.equal(k.bild.datei, store.ladeKarte(ordner, 1).bild.datei);
+  assert.deepEqual(k.kopiert_von, { nummer: 1, version: 2 });
+  // ältere Version und eigene Nummer
+  const alt = store.kopiereKarte(ordner, 1, { version: 1, neueNummer: 10 });
+  assert.equal(alt.nummer, 10);
+  assert.equal(alt.kp, 60);
+  assert.throws(() => store.kopiereKarte(ordner, 1, { neueNummer: 2 }), { code: 'nummer_vergeben' });
+  // Danach als Goldkarte ändern, das Original bleibt
+  store.aendereKarte(ordner, 2, { layout: 'gold' });
+  assert.equal(store.ladeKarte(ordner, 1).layout, 'normal');
+  assert.equal(store.ladeSammlung(ordner)[2], undefined);
+});

@@ -80,6 +80,7 @@ bediene('karte:laden', (ordner, nr, version) => ({ karte: store.ladeKarte(ordner
 // Die App speichert immer, notfalls als Entwurf. Das Formular liefert die ganze Karte, daher "ersetzen".
 bediene('karte:neu', (ordner, daten) => store.neueKarte(ordner, daten, { entwurf: true }));
 bediene('karte:aendern', (ordner, nr, daten) => store.aendereKarte(ordner, nr, daten, { entwurf: true, ersetzen: true }));
+bediene('karte:kopieren', (ordner, nr, version) => store.kopiereKarte(ordner, nr, { version }));
 bediene('karte:stil', (ordner, von, nummern) => store.uebertrageStil(ordner, von, nummern));
 bediene('bild:importieren', (ordner, pfad) => store.importiereBild(ordner, pfad));
 bediene('bild:waehlen', async (ordner) => {

@@ -93,3 +93,10 @@ test('Stil über die Kommandozeile übertragen', () => {
   assert.equal(k.layout, 'vollbild');
   assert.equal(k.folie.art, 'kosmos');
 });
+
+test('Karte über die Kommandozeile kopieren', () => {
+  const r = cli('karte', 'kopieren', '--set', ordner, '--nr', '1');
+  assert.equal(r.ok, true);
+  assert.equal(r.kopiert_von.nummer, 1);
+  assert.equal(cli('karte', 'zeigen', '--set', ordner, '--nr', String(r.nummer)).karte.name, 'Probe-Held');
+});

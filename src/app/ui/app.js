@@ -361,6 +361,7 @@ function neueKarte() {
   $('#version').hidden = true;
   $('#btnPng').hidden = true;
   $('#btnStil').hidden = true;
+  $('#btnKopieren').hidden = true;
   $('#besitzFeld').hidden = true;
   keineMeldung();
   zeigeEditor();
@@ -374,11 +375,13 @@ async function waehleKarte(nr, version) {
     zustand.nr = nr;
     zustand.karte = r.karte;
     const aktuell = r.versionen[r.versionen.length - 1];
-    $('#editorTitel').textContent = `Karte ${String(nr).padStart(3, '0')}`;
+    const kopie = r.karte.kopiert_von ? ` (Kopie von ${String(r.karte.kopiert_von.nummer).padStart(3, '0')})` : '';
+    $('#editorTitel').textContent = `Karte ${String(nr).padStart(3, '0')}${kopie}`;
     $('#version').hidden = false;
     $('#version').innerHTML = r.versionen.slice().reverse().map((v) => `<option value="${v}" ${v === r.karte.version ? 'selected' : ''}>Version ${v}${v === aktuell ? ' (aktuell)' : ''}</option>`).join('');
     $('#btnPng').hidden = false;
     $('#btnStil').hidden = false;
+    $('#btnKopieren').hidden = false;
     $('#besitzFeld').hidden = false;
     $('#besitz').value = r.sammlung.besitz || 0;
     keineMeldung();
@@ -403,6 +406,16 @@ $('#btnPng').onclick = async () => {
   try {
     const [r] = await mitWarten(() => rufe('export:png', zustand.info.set.ordner, { nr: String(zustand.nr) }));
     meldung('ok', `Gespeichert: ${r.png}`, [], { text: 'Datei zeigen', fn: () => rufe('datei:zeigen', r.png) });
+  } catch (e) { fehler(e); }
+};
+
+// Kopiert die angezeigte (gespeicherte) Version als neue Karte und öffnet die Kopie
+$('#btnKopieren').onclick = async () => {
+  try {
+    const von = zustand.nr;
+    const k = await rufe('karte:kopieren', zustand.info.set.ordner, von, zustand.karte.version);
+    await waehleKarte(k.nummer);
+    meldung('ok', `Kopie von Karte ${String(von).padStart(3, '0')} als Karte ${String(k.nummer).padStart(3, '0')} angelegt. Ungespeicherte Änderungen im Formular wurden nicht mitkopiert.`);
   } catch (e) { fehler(e); }
 };
 
@@ -588,6 +601,7 @@ function baueFormular() {
 function leseFormular() {
   const form = $('#formKarte');
   const k = { layout: zustand.karte.layout, bild: { ...(zustand.karte.bild || {}) } };
+  if (zustand.karte.kopiert_von) k.kopiert_von = zustand.karte.kopiert_von;
   form.querySelectorAll('[data-feld]').forEach((el) => {
     const name = el.dataset.feld;
     if (el.type === 'checkbox') k[name] = el.checked;

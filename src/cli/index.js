@@ -23,6 +23,7 @@ const HILFE = `Card Creator – Kommandozeile (Ausgabe immer JSON)
                                               --entwurf speichert auch mit fehlenden Angaben (nur auf Wunsch des Nutzers)
   karte zeigen --set <pfad> --nr <n> [--version <v>]
   karte versionen --set <pfad> --nr <n>
+  karte kopieren --set <pfad> --nr <n> [--version <v>] [--neue-nr <n>]   Karte als neue Karte kopieren (z. B. als Goldvariante)
   karte stil --set <pfad> --von <n> --nr 4-10   überträgt den Stil (Layout derselben Art, Effekt, Format, Holo, Goldton),
                                               jede geänderte Karte bekommt eine neue Version
   rendern --set <pfad> [--nr 7|1-12|1,3,5] [--ohne-beschnitt]      PNG nach <set>/export/png/
@@ -145,6 +146,11 @@ async function main(argv) {
       brauche(opt, 'set', 'nr', 'json');
       const k = store.aendereKarte(opt.set, zahl(opt.nr, 'nr'), json(opt.json), { entwurf: !!opt.entwurf });
       return ausgabe({ ok: true, nummer: k.nummer, version: k.version, name: k.name, status: k.entwurf ? 'entwurf' : 'gespeichert', offene_punkte: k.offene_punkte || [] });
+    }
+    case 'karte kopieren': {
+      brauche(opt, 'set', 'nr');
+      const k = store.kopiereKarte(opt.set, zahl(opt.nr, 'nr'), { version: opt.version, neueNummer: opt['neue-nr'] ? zahl(opt['neue-nr'], 'neue-nr') : undefined });
+      return ausgabe({ ok: true, nummer: k.nummer, version: k.version, name: k.name, kopiert_von: k.kopiert_von, status: k.entwurf ? 'entwurf' : 'gespeichert', offene_punkte: k.offene_punkte || [] });
     }
     case 'karte stil': {
       brauche(opt, 'set', 'von', 'nr');
