@@ -1,0 +1,17 @@
+# Projekt-Metadaten – maschinenlesbar, z. B. für Übersichten oder Automatisierung
+projekt:
+  name: "Card Creator"
+  slug: card-creator
+  beschreibung: "Erstellung von custom Sammelkarten"
+  typ: allgemein
+  struktur: standard
+  owner: "TODO: Owner festlegen"
+  angelegt: 2026-10-23
+  tags: []
+
+ki:
+  tools: [Claude Code]
+  anweisungen: claude/CLAUDE.md
+
+daten:
+  quellen: [Text/Dokumente]
