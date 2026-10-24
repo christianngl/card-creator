@@ -60,7 +60,8 @@
       "perMachine": false,
       "createDesktopShortcut": true,
       "shortcutName": "cTCG Creator",
-      "artifactName": "cTCG-Creator-Setup-${version}.exe"
+      "artifactName": "cTCG-Creator-Setup-${version}.exe",
+      "include": "infra/installer.nsh"
     },
     "portable": {
       "artifactName": "cTCG-Creator-${version}-portable.exe"
