@@ -491,13 +491,13 @@ const auswahl = (name, titel, optionen, { leer = false } = {}) => {
   return `<label>${titel}<select data-feld="${name}">${opts.join('')}</select></label>`;
 };
 
-// Energiekosten: pro Typ des Sets ein Zähler (ein Typ kann mehrfach kosten), der Wert steht im versteckten Feld
+// Energiekosten: pro Typ des Sets ein Zähler (ein Typ kann mehrfach kosten) in der Farbe des Typs, der Wert steht im versteckten Feld
 function kostenAuswahl(i, kosten, typen) {
   const anzahl = (name) => kosten.filter((k) => k === name).length;
   const fremd = kosten.filter((k) => !typen.some((t) => t.name === k));
   // Farblos steht auch bei den Knöpfen hinten
   const farblosHinten = [...typen].sort((a, b) => (a.name.toLowerCase() === 'farblos') - (b.name.toLowerCase() === 'farblos'));
-  const knoepfe = farblosHinten.map((t) => `<span class="kostentyp ${anzahl(t.name) ? 'aktiv' : ''}" data-kostentyp="${esc(t.name)}">
+  const knoepfe = farblosHinten.map((t) => `<span class="kostentyp ${anzahl(t.name) ? 'aktiv' : ''}" data-kostentyp="${esc(t.name)}" style="--typfarbe:${esc(t.farbe || '#808080')};--typtext:${esc(t.textfarbe || '#fff')}">
       <button type="button" data-kosten="-1" title="${esc(t.name)} entfernen">−</button>
       <span>${esc(t.symbol)} ${esc(t.name)} <b>${anzahl(t.name) || ''}</b></span>
       <button type="button" data-kosten="1" title="${esc(t.name)} hinzufügen">+</button>

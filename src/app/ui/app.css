@@ -90,10 +90,13 @@ aside .werkzeugleiste { top: -12px; margin: -12px -12px 0; padding: 12px; backgr
 fieldset { grid-column: 1 / -1; border: 1px solid var(--linie); border-radius: 8px; padding: 10px 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; margin: 0; background: rgba(19, 29, 51, .6); }
 .kostenfeld { display: flex; flex-direction: column; gap: 6px; font-weight: 600; font-size: 12px; color: var(--leise); }
 .kostentypen { display: flex; flex-wrap: wrap; gap: 6px; }
-.kostentyp { display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--linie); border-radius: 999px; padding: 2px; color: var(--text); font-weight: 400; }
-.kostentyp.aktiv { border-color: var(--akzent); }
-.kostentyp button { padding: 0 8px; border-radius: 999px; line-height: 20px; }
-.kostentyp b { color: var(--akzent); }
+/* Knöpfe in der Farbe des Typs (--typfarbe, --typtext aus den Set-Typen), gewählte Typen mit weißem Ring */
+.kostentyp { display: inline-flex; align-items: center; gap: 4px; border: 2px solid transparent; border-radius: 999px; padding: 2px; font-weight: 600;
+  background: var(--typfarbe); color: var(--typtext); opacity: .75; }
+.kostentyp.aktiv { opacity: 1; border-color: #fff; box-shadow: 0 0 0 2px var(--typfarbe); }
+.kostentyp button { padding: 0 8px; border-radius: 999px; line-height: 20px; background: rgba(0, 0, 0, .25); border-color: transparent; color: inherit; }
+.kostentyp button:hover { background: rgba(0, 0, 0, .4); }
+.kostentyp b { display: inline-block; min-width: 1.2em; text-align: center; }
 fieldset legend { font-weight: 700; font-size: 12px; color: var(--akzent); padding: 0 4px; }
 .bildzeile { display: flex; gap: 8px; align-items: center; }
 .dateiname { flex: 1; font-weight: 400; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
