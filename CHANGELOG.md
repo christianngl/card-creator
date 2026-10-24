@@ -4,6 +4,8 @@ Alle für Nutzer spürbaren Änderungen an cTCG Creator (früher Card Creator).
 
 ## [Unveröffentlicht]
 
+## [0.4.0] – 2026-10-24
+
 - Neues Layout „Energiekarte“ für Spielkarten-Sets: Foto über die ganze Karte, Name und 1 bis 5 große Energie-Symbole in der Farbe des gewählten Typs. Die Anzahl der Symbole legt man im Formular fest (per Kommandozeile Layout `energie` mit `energien`).
 - Bei „+ Neue Karte“ und beim Wechsel zu einer anderen Karte springt das Bearbeitungsformular wieder nach oben.
 - Neues Layout „Regenbogenkarte (Fotofenster oben)“: wie die normale Spielkarte mit Foto oben und Band, aber mit Regenbogenrahmen und Regenbogenglanz über der ganzen Karte (auch per Kommandozeile als `regenbogen-normal`).
