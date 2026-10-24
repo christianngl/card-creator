@@ -4,6 +4,8 @@ Alle für Nutzer spürbaren Änderungen an cTCG Creator (früher Card Creator).
 
 ## [Unveröffentlicht]
 
+- Sehr große Fotos mit hoher Auflösung erscheinen jetzt zuverlässig in Vorschau, PNG und Druck-PDF. Statt eines leeren oder nur halb gezeichneten Fotofensters nutzt die App eine verkleinerte Arbeitskopie, die für 300 dpi weiterhin reicht. Das Originalfoto bleibt unverändert.
+
 ## [0.3.0] – 2026-10-24
 
 - Die Update-Suche funktioniert wieder: Im Release v0.2.1 lagen versehentlich noch die Dateien von 0.2.0, deshalb meldete die App immer wieder ein Update, ohne neuer zu werden. Sie nimmt jetzt nur Dateien, deren Versionsnummer zum Release passt.

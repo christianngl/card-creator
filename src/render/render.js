@@ -8,6 +8,7 @@ const { BrowserWindow } = require('electron');
 const store = require('../core/store');
 const { karteSeite, rueckseiteSeite } = require('../core/seite');
 const { vorlage } = require('../vorlagen');
+const { arbeitsbilder } = require('./bilder');
 
 const DPI = 300;
 const A4 = { breite: 210, hoehe: 297 };
@@ -17,7 +18,7 @@ function tempOrdner() {
 }
 
 async function warteBisFertig(wc) {
-  for (let i = 0; i < 200; i++) {
+  for (let i = 0; i < 600; i++) {
     if (await wc.executeJavaScript('window.__fertig === true')) return;
     await new Promise((r) => setTimeout(r, 50));
   }
@@ -71,7 +72,7 @@ const formatSchluessel = (f) => `${f.breite}x${f.hoehe}+${f.beschnitt}`;
 
 async function rendereKarteBild(set, karte, temp) {
   const m = masse(set, karte);
-  return fotografiere(karteSeite(set, karte, { zoom: m.zoom }), m.breite, m.hoehe, temp);
+  return fotografiere(karteSeite(set, karte, { zoom: m.zoom, bildPfad: arbeitsbilder(set.ordner) }), m.breite, m.hoehe, temp);
 }
 
 function ohneBeschnitt(set, karte, bild) {
@@ -125,7 +126,7 @@ function vorschauBild(ordner, nummer) {
     const zoom = VORSCHAU_BREITE / raster.breite;
     const temp = tempOrdner();
     try {
-      const bild = await fotografiere(karteSeite(set, karte, { zoom }), VORSCHAU_BREITE, Math.round(raster.hoehe * zoom), temp);
+      const bild = await fotografiere(karteSeite(set, karte, { zoom, bildPfad: arbeitsbilder(set.ordner) }), VORSCHAU_BREITE, Math.round(raster.hoehe * zoom), temp);
       fs.writeFileSync(datei, bild.toPNG());
     } finally {
       fs.rmSync(temp, { recursive: true, force: true });
@@ -232,7 +233,7 @@ async function druckePdf(ordner, { nr, modus = 'bogen', rueckseiten = true, aufl
       let rueckUrl = null;
       if (rueckseiten) {
         const datei = path.join(temp, `rueckseite-${g}.png`);
-        fs.writeFileSync(datei, (await fotografiere(rueckseiteSeite(set, { zoom: m.zoom, format: m.format }), m.breite, m.hoehe, temp)).toPNG());
+        fs.writeFileSync(datei, (await fotografiere(rueckseiteSeite(set, { zoom: m.zoom, format: m.format, bildPfad: arbeitsbilder(set.ordner) }), m.breite, m.hoehe, temp)).toPNG());
         rueckUrl = pathToFileURL(datei).href;
       }
       if (modus === 'bogen') seiten.push(...bogenSeiten(urls, rueckUrl, m.mm));

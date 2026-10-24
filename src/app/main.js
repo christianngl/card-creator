@@ -7,6 +7,7 @@ const store = require('../core/store');
 const { karteSeite, rueckseiteSeite, kartenMasse } = require('../core/seite');
 const { vorlage } = require('../vorlagen');
 const { rendereKarten, druckePdf, vorschauBild } = require('../render/render');
+const { arbeitsbilder } = require('../render/bilder');
 const update = require('./update');
 
 // Der Datenordner heißt weiter wie vor dem Umbenennen der App, damit die Liste der Sets erhalten bleibt
@@ -96,10 +97,10 @@ bediene('bild:waehlen', async (ordner) => {
 bediene('vorschau', (ordner, karte) => {
   const set = store.ladeSet(ordner);
   const nummer = karte.nummer || (store.nummern(ordner).slice(-1)[0] || 0) + 1;
-  return { html: karteSeite(set, { ...karte, nummer }), masse: kartenMasse(set, karte) };
+  return { html: karteSeite(set, { ...karte, nummer }, { bildPfad: arbeitsbilder(ordner) }), masse: kartenMasse(set, karte) };
 });
 bediene('vorschau:bild', async (ordner, nr) => pathToFileURL(await vorschauBild(ordner, nr)).href);
-bediene('vorschau:rueckseite', (ordner) => rueckseiteSeite(store.ladeSet(ordner)));
+bediene('vorschau:rueckseite', (ordner) => rueckseiteSeite(store.ladeSet(ordner), { bildPfad: arbeitsbilder(ordner) }));
 bediene('sammlung:besitz', (ordner, nr, anzahl) => store.setzeBesitz(ordner, nr, anzahl));
 bediene('export:png', (ordner, optionen) => rendereKarten(ordner, optionen));
 bediene('export:druck', (ordner, optionen) => druckePdf(ordner, optionen));

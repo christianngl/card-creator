@@ -15,6 +15,8 @@ const ANPASSEN = `
 (async () => {
   await document.fonts.ready;
   await Promise.all([...document.images].map((i) => i.complete ? null : new Promise((r) => { i.onload = i.onerror = r; })));
+  // Große Fotos dekodiert Chromium erst beim Zeichnen; ohne decode() wäre das Fotofenster beim Rendern noch leer
+  await Promise.all([...document.images].map((i) => i.decode().catch(() => {})));
   for (const el of document.querySelectorAll('[data-anpassen]')) {
     let groesse = parseFloat(getComputedStyle(el).fontSize);
     while (el.scrollWidth > el.clientWidth + 1 && groesse > 12) el.style.fontSize = (groesse -= 1) + 'px';
@@ -23,8 +25,9 @@ const ANPASSEN = `
 })();
 </script>`;
 
-function bildUrlFuer(ordner) {
-  return (datei) => pathToFileURL(path.resolve(ordner, datei)).href;
+// bildPfad(datei) kann das Bild durch eine Arbeitskopie ersetzen (src/render/bilder.js, nur in Electron)
+function bildUrlFuer(ordner, bildPfad) {
+  return (datei) => pathToFileURL(bildPfad ? bildPfad(datei) : path.resolve(ordner, datei)).href;
 }
 
 // zoom: Faktor gegenüber dem Vorlagenraster (690 px Kartenbreite samt Beschnitt), format: Kartenformat für die Höhe
@@ -50,14 +53,14 @@ function gesamtzahl(set) {
 
 function karteSeite(set, karte, optionen) {
   const v = vorlage(set.vorlage);
-  return seite(set, v.karteHtml(set, karte, { bildUrl: bildUrlFuer(set.ordner), gesamt: gesamtzahl(set) }), { ...optionen, format: v.formatVon(set, karte) });
+  return seite(set, v.karteHtml(set, karte, { bildUrl: bildUrlFuer(set.ordner, optionen && optionen.bildPfad), gesamt: gesamtzahl(set) }), { ...optionen, format: v.formatVon(set, karte) });
 }
 
 // optionen.format: Format der Karten, zu denen die Rückseite gehört (Standard: Format des Sets)
 function rueckseiteSeite(set, optionen = {}) {
   const v = vorlage(set.vorlage);
   const format = optionen.format || v.formatVon(set);
-  return seite(set, v.rueckseiteHtml(set, { bildUrl: bildUrlFuer(set.ordner), format }), { ...optionen, format });
+  return seite(set, v.rueckseiteHtml(set, { bildUrl: bildUrlFuer(set.ordner, optionen.bildPfad), format }), { ...optionen, format });
 }
 
 // Maße einer Karte im Vorlagenraster, z. B. für die Vorschau in der App

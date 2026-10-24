@@ -75,6 +75,7 @@ Regeln:
 - Updates: `src/app/update.js` fragt beim Start und über „Hilfe → Nach Updates suchen …“ das neueste GitHub-Release ab und spielt Installer bzw. portable EXE ein. Dafür müssen Releases die Dateien `cTCG-Creator-Setup-<version>.exe` und `cTCG-Creator-<version>-portable.exe` haben (`npm run dist`). Tag `v<version>`, `version` in `package.json` und Versionsnummer im Dateinamen müssen gleich sein, Dateien anderer Versionen ignoriert die Update-Suche. Deshalb vor jedem Release die Version in `package.json` erhöhen und neu bauen. `npm run dist` bricht ab, wenn es den Tag schon gibt.
 - Name und Logo: kurz **cTCG Creator**, lang **Custom TCG Creator**. Logos liegen unter `assets/logo/` (Originale `*-original.png`, daraus mit `tools/logo.cs` die Fassungen für Kopfzeile, Startseite, Über-Dialog und `assets/app.ico`, Aufruf steht oben in der Datei). Farbschema der Oberfläche nach dem Logo (dunkel): Navy `#0b1222`, Cyan `#2fc4ee` als Akzent, Orange `#f07b22` → Gold `#f4c25f` für Hauptaktionen, als CSS-Variablen oben in `src/app/ui/app.css`. Repo, Projektordner und Paketname heißen seit 2026-10-24 `ctcg-creator`. Nur der Datenordner `%APPDATA%/card-creator` und die `appId` `de.wildhunt.cardcreator` behalten den alten Namen, damit Liste der Sets und Installation beim Update erhalten bleiben.
 - Vorschaubilder für Startseite und Kartenübersicht liegen zwischengespeichert in `<Set-Ordner>/.vorschau/` und entstehen neu, sobald sich Karte, Set oder Vorlage ändern.
+- Sehr große Fotos (über 24 Megapixel) lädt Chromium beim Rendern nicht zuverlässig. Vorschau, PNG und PDF nutzen dafür eine verkleinerte Arbeitskopie in `<Set-Ordner>/.vorschau/bilder/` (`src/render/bilder.js`, EXIF-Ausrichtung bleibt erhalten), das Original in `bilder/` bleibt unverändert. Die Kartenseite wartet außerdem mit `img.decode()`, bis alle Bilder dekodiert sind.
 - Aufbau des Codes:
 
 | Pfad | Inhalt |
@@ -162,7 +163,7 @@ Alles landet im Set-Ordner:
 ├─ set.json, sammlung.json
 ├─ karten/007/v001.json, v002.json …   jede Version einer Karte
 ├─ bilder/                               Fotos und KI-Bilder (beim Anlegen hierher kopiert)
-├─ .vorschau/                            kleine Vorschaubilder für die App (Zwischenspeicher)
+├─ .vorschau/                            kleine Vorschaubilder und Arbeitskopien großer Fotos (Zwischenspeicher)
 ├─ export/png/SE1-007_v2.png             300 dpi, mit Beschnitt (oder _ohne-beschnitt)
 └─ export/druck/SE1_<datum>_bogen.pdf    A4-Bögen mit Schnittmarken und gespiegelten Rückseiten, je Format eigene Bögen,
                                          oder _einzeln.pdf: eine Karte pro Seite in Kartengröße samt Beschnitt, Rückseite dahinter
