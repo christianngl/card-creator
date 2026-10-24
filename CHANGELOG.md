@@ -4,6 +4,7 @@ Alle für Nutzer spürbaren Änderungen an cTCG Creator (früher Card Creator).
 
 ## [Unveröffentlicht]
 
+- Energiekosten stehen in fester Reihenfolge: zuerst der Typ der Karte, dann die übrigen Typen, „Farblos“ immer zuletzt. Auch bei den Auswahlknöpfen steht Farblos jetzt hinten.
 - Sehr große Fotos mit hoher Auflösung erscheinen jetzt zuverlässig in Vorschau, PNG und Druck-PDF. Statt eines leeren oder nur halb gezeichneten Fotofensters nutzt die App eine verkleinerte Arbeitskopie, die für 300 dpi weiterhin reicht. Das Originalfoto bleibt unverändert.
 
 ## [0.3.0] – 2026-10-24

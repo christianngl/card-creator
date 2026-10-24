@@ -495,7 +495,9 @@ const auswahl = (name, titel, optionen, { leer = false } = {}) => {
 function kostenAuswahl(i, kosten, typen) {
   const anzahl = (name) => kosten.filter((k) => k === name).length;
   const fremd = kosten.filter((k) => !typen.some((t) => t.name === k));
-  const knoepfe = typen.map((t) => `<span class="kostentyp ${anzahl(t.name) ? 'aktiv' : ''}" data-kostentyp="${esc(t.name)}">
+  // Farblos steht auch bei den Knöpfen hinten
+  const farblosHinten = [...typen].sort((a, b) => (a.name.toLowerCase() === 'farblos') - (b.name.toLowerCase() === 'farblos'));
+  const knoepfe = farblosHinten.map((t) => `<span class="kostentyp ${anzahl(t.name) ? 'aktiv' : ''}" data-kostentyp="${esc(t.name)}">
       <button type="button" data-kosten="-1" title="${esc(t.name)} entfernen">−</button>
       <span>${esc(t.symbol)} ${esc(t.name)} <b>${anzahl(t.name) || ''}</b></span>
       <button type="button" data-kosten="1" title="${esc(t.name)} hinzufügen">+</button>
@@ -507,6 +509,17 @@ function kostenAuswahl(i, kosten, typen) {
   </div>`;
 }
 
+// Reihenfolge der Energiekosten: zuerst der Typ der Karte, dann die übrigen Typen wie im Set, Farblos immer zuletzt
+function ordneKosten(kosten, kartentyp) {
+  const reihe = (zustand.info.set.typen || []).map((t) => t.name);
+  const rang = (x) => {
+    if (x === kartentyp) return -1;
+    if (x.toLowerCase() === 'farblos') return reihe.length + 1;
+    return reihe.includes(x) ? reihe.indexOf(x) : reihe.length;
+  };
+  return kosten.slice().sort((x, y) => rang(x) - rang(y));
+}
+
 function aendereKosten(knopf) {
   const chip = knopf.closest('[data-kostentyp]');
   const name = chip.dataset.kostentyp;
@@ -514,11 +527,7 @@ function aendereKosten(knopf) {
   const kosten = eingabe.value.split(',').map((x) => x.trim()).filter(Boolean);
   if (Number(knopf.dataset.kosten) > 0) kosten.push(name);
   else if (kosten.includes(name)) kosten.splice(kosten.lastIndexOf(name), 1);
-  // Reihenfolge wie die Typen im Set, unbekannte Typen hinten
-  const reihe = (zustand.info.set.typen || []).map((t) => t.name);
-  const rang = (x) => (reihe.includes(x) ? reihe.indexOf(x) : reihe.length);
-  kosten.sort((x, y) => rang(x) - rang(y));
-  eingabe.value = kosten.join(', ');
+  eingabe.value = ordneKosten(kosten, $('#formKarte [data-feld="typ"]')?.value).join(', ');
   const zahl = kosten.filter((x) => x === name).length;
   chip.classList.toggle('aktiv', zahl > 0);
   chip.querySelector('b').textContent = zahl || '';
@@ -623,7 +632,7 @@ function leseFormular() {
     atk[i] = atk[i] || {};
     const v = el.value.trim();
     if (!v) return;
-    if (el.dataset.teil === 'kosten') atk[i].kosten = v.split(',').map((x) => x.trim()).filter(Boolean);
+    if (el.dataset.teil === 'kosten') atk[i].kosten = ordneKosten(v.split(',').map((x) => x.trim()).filter(Boolean), k.typ);
     else atk[i][el.dataset.teil] = el.dataset.teil === 'schaden' && /^\d+$/.test(v) ? Number(v) : v;
   });
   const gefuellt = atk.filter((a) => a && Object.keys(a).length);
