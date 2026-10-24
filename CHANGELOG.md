@@ -4,7 +4,7 @@ Alle für Nutzer spürbaren Änderungen an cTCG Creator (früher Card Creator).
 
 ## [Unveröffentlicht]
 
-## [0.2.2] – 2026-10-24
+## [0.3.0] – 2026-10-24
 
 - Die Update-Suche funktioniert wieder: Im Release v0.2.1 lagen versehentlich noch die Dateien von 0.2.0, deshalb meldete die App immer wieder ein Update, ohne neuer zu werden. Sie nimmt jetzt nur Dateien, deren Versionsnummer zum Release passt.
 - Weniger Fehlalarme von Virenscannern wie Norton: Das Update der portablen EXE kommt ohne verstecktes PowerShell-Skript aus, und Installer und App enthalten keine unnötigen Hilfsdateien mehr (elevate.exe, app-update.yml). Weil die Dateien nicht signiert sind, kann ein Virenscanner sie trotzdem noch als unbekannt melden.

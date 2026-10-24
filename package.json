@@ -1,6 +1,6 @@
 {
   "name": "ctcg-creator",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "private": true,
   "description": "Custom TCG Creator – Desktop-App zum Gestalten, Drucken und Verwalten eigener Sammel- und Spielkartensets",
   "main": "src/app/main.js",
