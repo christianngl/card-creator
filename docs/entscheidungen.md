@@ -48,4 +48,11 @@
 ## 2026-10-23 – Windows-Release
 
 - Gebaut mit electron-builder (`npm run dist`): NSIS-Installer und portable EXE, x64, nicht signiert. Vorlagen und Schrift liegen ausgepackt neben dem asar-Archiv (`asarUnpack`), damit Chromium sie per file:-URL lädt.
-- Releases liegen im privaten GitHub-Repo, herunterladen können sie nur Personen mit Zugriff.
+- Releases liegen auf GitHub. Seit der Update-Suche (2026-10-24) muss das Repo öffentlich sein.
+
+## 2026-10-24 – Updates über GitHub-Releases
+
+- Die App fragt beim Start still und über „Hilfe → Nach Updates suchen …“ bei `api.github.com` nach dem neuesten Release (`src/app/update.js`). Gesendet wird nur diese Anfrage, keine Karten- oder Set-Daten. Ohne Internet passiert beim Start nichts, die App bleibt offline nutzbar.
+- Ist das Release neuer als `app.getVersion()`, zeigt ein Dialog die Release-Notizen. „Jetzt aktualisieren“ lädt den Installer und startet ihn still (`/S --updated --force-run`), die App startet danach neu. Die portable EXE lädt die neue portable EXE in ihren Ordner, startet sie und entfernt die alte. Aus dem Projektordner gestartet (`start.ps1`) wird nur auf `git pull` hingewiesen.
+- Kein electron-updater: Er braucht `latest.yml` im Release und kann portable EXEs nicht aktualisieren. Die Erkennung läuft über die Dateinamen `CardCreator-Setup-<version>.exe` und `CardCreator-<version>-portable.exe`. Das Repo muss dafür öffentlich bleiben, sonst antwortet die API ohne Anmeldung mit 404.
+- Das Fenster hat dafür wieder eine sichtbare Menüleiste (Datei, Bearbeiten, Ansicht, Hilfe).

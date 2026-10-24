@@ -4,6 +4,8 @@ Alle für Nutzer spürbaren Änderungen an Card Creator.
 
 ## [Unveröffentlicht]
 
+- Card Creator sucht beim Start auf GitHub nach einer neuen Version und kann sie auf Wunsch gleich herunterladen und einspielen (Installer und portable EXE). Manuell geht das über das neue Menü „Hilfe → Nach Updates suchen …“. Ohne Internet läuft die App wie gewohnt.
+
 ## [0.2.0] – 2026-10-23
 
 - „+ Neue Karte“ bleibt in der Kartenübersicht und in der Seitenleiste des Editors beim Scrollen oben stehen.

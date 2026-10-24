@@ -2,11 +2,12 @@
 const fs = require('fs');
 const path = require('path');
 const { pathToFileURL } = require('url');
-const { app, BrowserWindow, dialog, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, Menu, dialog, ipcMain, shell } = require('electron');
 const store = require('../core/store');
 const { karteSeite, rueckseiteSeite, kartenMasse } = require('../core/seite');
 const { vorlage } = require('../vorlagen');
 const { rendereKarten, druckePdf, vorschauBild } = require('../render/render');
+const update = require('./update');
 
 // Liste aller bekannten Sets (angelegt oder geöffnet), zuletzt benutzte zuerst. Die Sets selbst liegen in ihren Ordnern.
 const ZULETZT = () => path.join(app.getPath('userData'), 'zuletzt.json');
@@ -108,7 +109,6 @@ function oeffneFenster() {
     minHeight: 640,
     title: 'Card Creator',
     icon: path.join(__dirname, '..', '..', 'assets', 'app.ico'),
-    autoHideMenuBar: true,
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, sandbox: false },
   });
   // Links öffnen nie ein neues Fenster oder den Browser
@@ -117,5 +117,36 @@ function oeffneFenster() {
   fenster.loadFile(path.join(__dirname, 'ui', 'index.html'));
 }
 
-app.whenReady().then(oeffneFenster);
+function sucheUpdates(still) {
+  return update.suche({ app, dialog, shell, fenster, still });
+}
+
+function baueMenue() {
+  Menu.setApplicationMenu(Menu.buildFromTemplate([
+    { label: 'Datei', submenu: [{ role: 'quit', label: 'Beenden' }] },
+    { label: 'Bearbeiten', role: 'editMenu' },
+    { label: 'Ansicht', submenu: [
+      { role: 'reload', label: 'Neu laden' },
+      { role: 'toggleDevTools', label: 'Entwicklertools' },
+      { type: 'separator' },
+      { role: 'resetZoom', label: 'Originalgröße' },
+      { role: 'zoomIn', label: 'Vergrößern' },
+      { role: 'zoomOut', label: 'Verkleinern' },
+      { type: 'separator' },
+      { role: 'togglefullscreen', label: 'Vollbild' },
+    ] },
+    { label: 'Hilfe', submenu: [
+      { label: 'Nach Updates suchen …', click: () => sucheUpdates(false) },
+      { type: 'separator' },
+      { label: 'Über Card Creator', click: () => dialog.showMessageBox(fenster, { type: 'info', title: 'Über Card Creator', message: `Card Creator ${app.getVersion()}` }) },
+    ] },
+  ]));
+}
+
+app.whenReady().then(() => {
+  baueMenue();
+  oeffneFenster();
+  // Beim Start still nach Updates suchen: ohne Internet oder ohne neue Version erscheint nichts
+  fenster.webContents.once('did-finish-load', () => sucheUpdates(true));
+});
 app.on('window-all-closed', () => app.quit());

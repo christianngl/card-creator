@@ -72,6 +72,7 @@ Regeln:
 - **Electron** (Node.js). Die Vorlage ist HTML/CSS. Vorschau, PNG (`capturePage`) und PDF (`printToPDF`) nutzen dieselbe Chromium-Engine, damit der Druck genau der Vorschau entspricht. Entscheidung und Alternativen stehen in `docs/entscheidungen.md`.
 - Start: `start.ps1` (Windows, installiert bei Bedarf die Abhängigkeiten) oder `npm start`. Tests: `npm test`.
 - Kartenformat: Das Set hat ein Standardformat (Start: **63 × 88 mm**, **3 mm Beschnitt**), jede Karte kann ein eigenes Höhe × Breite haben. Die Vorlage skaliert die Breite (Raster 690 px samt Beschnitt), zusätzliche oder fehlende Höhe nimmt das Fotofenster auf (CSS-Variable `--dh`). Zu breite oder zu schmale Formate meldet `pruefeFormat`. Bei sehr kleinen Formaten (z. B. 44 × 63 mm) rückt der Goldrahmen nahe an die Schnittkante. Ausgabe mit 300 dpi, z. B. 815 × 1110 px für 63 × 88 mm mit Beschnitt.
+- Updates: `src/app/update.js` fragt beim Start und über „Hilfe → Nach Updates suchen …“ das neueste GitHub-Release ab und spielt Installer bzw. portable EXE ein. Dafür müssen Releases die Dateien `CardCreator-Setup-<version>.exe` und `CardCreator-<version>-portable.exe` haben (`npm run dist`).
 - Vorschaubilder für Startseite und Kartenübersicht liegen zwischengespeichert in `<Set-Ordner>/.vorschau/` und entstehen neu, sobald sich Karte, Set oder Vorlage ändern.
 - Aufbau des Codes:
 
