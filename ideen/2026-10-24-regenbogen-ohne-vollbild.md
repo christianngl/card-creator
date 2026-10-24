@@ -1,10 +1,10 @@
 ---
 titel: Regenbogen ohne Vollbild
-status: offen
+status: erledigt
 erstellt: 2026-10-24
 uhrzeit: 09:41
 issue: 11
-abgeglichen: offen
+abgeglichen: erledigt
 ---
 
 Moin Hübscher,

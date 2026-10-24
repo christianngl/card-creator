@@ -4,6 +4,7 @@ Alle für Nutzer spürbaren Änderungen an cTCG Creator (früher Card Creator).
 
 ## [Unveröffentlicht]
 
+- Neues Layout „Regenbogenkarte (Fotofenster oben)“: wie die normale Spielkarte mit Foto oben und Band, aber mit Regenbogenrahmen und Regenbogenglanz über der ganzen Karte (auch per Kommandozeile als `regenbogen-normal`).
 - Die Knöpfe für die Energiekosten haben die Farbe ihres Typs (z. B. Natur grün, Feuer rot), gewählte Typen sind hervorgehoben. So erkennt man die Energie auf einen Blick.
 - Energiekosten stehen in fester Reihenfolge: zuerst der Typ der Karte, dann die übrigen Typen, „Farblos“ immer zuletzt. Auch bei den Auswahlknöpfen steht Farblos jetzt hinten.
 - Sehr große Fotos mit hoher Auflösung erscheinen jetzt zuverlässig in Vorschau, PNG und Druck-PDF. Statt eines leeren oder nur halb gezeichneten Fotofensters nutzt die App eine verkleinerte Arbeitskopie, die für 300 dpi weiterhin reicht. Das Originalfoto bleibt unverändert.

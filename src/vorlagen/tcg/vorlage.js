@@ -32,6 +32,7 @@ const LAYOUTS = {
   vollbild: { titel: 'Vollbild (Foto über die ganze Karte)', kartentyp: 'spielkarte', aufbau: 'spiel' },
   gold: { titel: 'Goldkarte (Vollbild in Gold)', kartentyp: 'spielkarte', aufbau: 'spiel' },
   regenbogen: { titel: 'Regenbogenkarte (Vollbild mit Regenbogenglanz)', kartentyp: 'spielkarte', aufbau: 'spiel' },
+  'regenbogen-normal': { titel: 'Regenbogenkarte (Fotofenster oben, Regenbogenglanz)', kartentyp: 'spielkarte', aufbau: 'spiel' },
   trainer: { titel: 'Trainer (Effektkarte)', kartentyp: 'spielkarte', aufbau: 'trainer' },
   sammel: { titel: 'Sammelkarte (Bild, Name, Beschreibung)', kartentyp: 'sammelkarte', aufbau: 'sammel' },
   'sammel-regenbogen': { titel: 'Regenbogen-Sammelkarte (mit Regenbogenglanz)', kartentyp: 'sammelkarte', aufbau: 'sammel' },
@@ -82,7 +83,7 @@ const FELDER = {
     entwickelt_aus: 'Name der Vorstufe, optional',
     kp: 'Zahl (Pflicht)',
     typ: 'Name eines Typs des Sets (Pflicht)',
-    band: 'Kurzinfo im Band unter dem Foto, optional',
+    band: 'Kurzinfo im Band unter dem Foto, optional (auch bei regenbogen-normal)',
     attacken: '[{ kosten: [Typname, …], name, schaden, text }] – 1 bis 2 (Pflicht)',
     schwaeche: 'Text, optional',
     resistenz: 'Text, optional',
@@ -91,6 +92,7 @@ const FELDER = {
   vollbild: 'wie normal, ohne band',
   gold: 'wie vollbild, dazu goldton: true | false (Foto in Gold eingefärbt, Standard true)',
   regenbogen: 'wie vollbild, mit Regenbogenrahmen und Regenbogenglanz über dem Foto',
+  'regenbogen-normal': 'wie normal (Fotofenster oben, mit band), mit Regenbogenrahmen und Regenbogenglanz über der ganzen Karte',
   trainer: {
     untertyp: 'Text, z. B. UNTERSTÜTZER, optional',
     effekt: 'Text (Pflicht)',
@@ -281,20 +283,22 @@ function name(karte, extraStil = '') {
 // Liefert das Markup einer Karte (ein .card-Element). bildUrl wandelt einen Bildpfad des Sets in eine URL um.
 function karteHtml(set, karte, { bildUrl, gesamt }) {
   const typ = typVon(set, karte.typ);
-  const klassen = ['card', { normal: 'normal', vollbild: 'full', gold: 'full goldkarte', regenbogen: 'full regenbogenkarte', trainer: 'trainer', sammel: 'sammel', 'sammel-regenbogen': 'sammel regenbogenkarte' }[karte.layout] || 'normal'];
+  const klassen = ['card', { normal: 'normal', vollbild: 'full', gold: 'full goldkarte', regenbogen: 'full regenbogenkarte', 'regenbogen-normal': 'normal regenbogenkarte', trainer: 'trainer', sammel: 'sammel', 'sammel-regenbogen': 'sammel regenbogenkarte' }[karte.layout] || 'normal'];
   if (typ) klassen.push(`ty-${slug(typ.name)}`);
   if (karte.holo) klassen.push('holo');
   const teile = ['<div class="gold"></div>'];
   const folie = folieHtml(karte);
   const folieImBild = folie && (karte.folie.bereich || 'bild') === 'bild' ? folie : '';
   // Regenbogenkarten haben den Regenbogenglanz fest über dem Foto, ein Folien-Effekt kommt bei Bedarf dazu
-  const glanz = ['regenbogen', 'sammel-regenbogen'].includes(karte.layout) ? '<div class="regenbogenglanz"></div>' : '';
+  const glanz = ['regenbogen', 'regenbogen-normal', 'sammel-regenbogen'].includes(karte.layout) ? '<div class="regenbogenglanz"></div>' : '';
 
   if (['vollbild', 'gold', 'regenbogen'].includes(karte.layout)) {
     const goldton = karte.layout === 'gold' && karte.goldton !== false ? ' goldton' : '';
     teile.push(`<div class="panel">${foto(karte, bildUrl, goldton)}${glanz}${folieImBild}<div class="shade"></div></div>`);
   } else {
-    teile.push('<div class="panel"></div>', `<div class="win">${foto(karte, bildUrl)}${glanz}${folieImBild}</div>`);
+    // Bei regenbogen-normal liegt der Glanz auch über der Kartenfläche, nicht nur über dem Foto
+    const flaeche = karte.layout === 'regenbogen-normal' ? glanz : '';
+    teile.push(`<div class="panel">${flaeche}</div>`, `<div class="win">${foto(karte, bildUrl)}${glanz}${folieImBild}</div>`);
   }
 
   if (karte.layout === 'trainer') {
@@ -313,7 +317,7 @@ function karteHtml(set, karte, { bildUrl, gesamt }) {
     teile.push(name(karte));
     teile.push(`<div class="hp"><small>KP</small>${esc(karte.kp)}</div>`);
     if (typ) teile.push(`<div class="energy">${esc(typ.symbol)}</div>`);
-    if (karte.layout === 'normal' && karte.band) teile.push(`<div class="ribbon" data-anpassen>${esc(karte.band)}</div>`);
+    if (['normal', 'regenbogen-normal'].includes(karte.layout) && karte.band) teile.push(`<div class="ribbon" data-anpassen>${esc(karte.band)}</div>`);
     const atks = (karte.attacken || []).map((a) => {
       const kosten = (a.kosten || []).map((k) => energie(set, k)).join('');
       const text = a.text ? `<p>${absatz(a.text)}</p>` : '';

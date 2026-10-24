@@ -251,6 +251,20 @@ test('Regenbogenkarte: eigenes Layout mit Regenbogenglanz, auch für Sammelkarte
   assert.equal(store.ladeKarte(ordner, 2).layout, 'regenbogen');
 });
 
+test('Regenbogenkarte mit Fotofenster oben: Band und Glanz über Foto und Kartenfläche', () => {
+  const { ordner, bild } = neuesSet();
+  const k = store.neueKarte(ordner, spielkarte(bild, { layout: 'regenbogen-normal', band: 'Kurzinfo' }));
+  const html = karteSeite(store.ladeSet(ordner), k);
+  assert.match(html, /class="card normal regenbogenkarte/);
+  assert.match(html, /class="win"/);
+  assert.match(html, /class="ribbon"[^>]*>Kurzinfo/);
+  assert.equal((html.match(/class="regenbogenglanz"/g) || []).length, 2);
+  // Stil übertragen geht zwischen allen Spielkarten mit Foto
+  store.neueKarte(ordner, spielkarte(bild, { layout: 'vollbild' }));
+  store.uebertrageStil(ordner, 1, [2]);
+  assert.equal(store.ladeKarte(ordner, 2).layout, 'regenbogen-normal');
+});
+
 test('Effekt Strahlen gibt es nicht mehr, alte Karten verlieren ihn beim Speichern', () => {
   const { ordner, bild } = neuesSet();
   const { vorlage } = require('../src/vorlagen');

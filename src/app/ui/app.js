@@ -567,7 +567,7 @@ function baueFormular() {
     if (k.layout === 'gold') teile.push(`<label class="zeile ganz"><input type="checkbox" data-feld="goldton" ${k.goldton !== false ? 'checked' : ''}> Foto in Gold einfärben</label>`);
     teile.push(feld('stufe', 'Stufe', { hinweis: 'z. B. Basis, Phase 1' }), feld('entwickelt_aus', 'Entwickelt sich aus'),
       feld('kp', 'KP', { typ: 'number' }), auswahl('typ', 'Typ', typen, { leer: true }));
-    if (k.layout === 'normal') teile.push(feld('band', 'Band unter dem Foto', { ganz: true }));
+    if (['normal', 'regenbogen-normal'].includes(k.layout)) teile.push(feld('band', 'Band unter dem Foto', { ganz: true }));
     const atk = k.attacken && k.attacken.length ? k.attacken : [{}];
     [0, 1].forEach((i) => {
       const a = atk[i] || {};
