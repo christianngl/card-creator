@@ -18,14 +18,14 @@ Private Fotos und die daraus entstandenen Karten werden nie veröffentlicht. Sie
 
 ## Herunterladen
 
-Fertige Windows-Versionen stehen unter [Releases](https://github.com/christianngl/card-creator/releases):
+Fertige Windows-Versionen stehen unter [Releases](https://github.com/christianngl/ctcg-creator/releases):
 
 - `cTCG-Creator-Setup-<version>.exe` – Installer mit Startmenü- und Desktop-Verknüpfung
 - `cTCG-Creator-<version>-portable.exe` – ohne Installation, einfach starten
 
-Die Dateien sind nicht signiert. Windows SmartScreen fragt deshalb beim ersten Start nach („Weitere Informationen“ → „Trotzdem ausführen“).
+Die Dateien sind nicht signiert. Windows SmartScreen fragt deshalb beim ersten Start nach („Weitere Informationen“ → „Trotzdem ausführen“), und Virenscanner wie Norton können sie als unbekannt melden. Dann die Datei in Norton als vertrauenswürdig markieren bzw. unter submit.norton.com als Fehlalarm melden.
 
-Neue Version bauen: Version in `package.json` erhöhen, `npm run dist` (Ergebnis in `dist/`), dann als Release hochladen.
+Neue Version bauen: Version in `package.json` erhöhen und committen, `npm run dist` (leert `dist/` und bricht ab, wenn es die Version schon als Tag gibt), dann die beiden EXE-Dateien mit genau dieser Versionsnummer als Release `v<version>` hochladen. Dateien einer anderen Version findet die Update-Suche der App nicht.
 
 ## Starten
 
@@ -52,7 +52,7 @@ Eingesetzte Tools: Claude Code (Entwicklung), Claude-Instanzen (Bedienung der Ap
 ## Projektstruktur
 
 ```text
-card-creator/
+ctcg-creator/
 ├─ CLAUDE.md
 ├─ README.md
 ├─ .gitignore

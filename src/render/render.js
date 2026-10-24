@@ -13,7 +13,7 @@ const DPI = 300;
 const A4 = { breite: 210, hoehe: 297 };
 
 function tempOrdner() {
-  return fs.mkdtempSync(path.join(os.tmpdir(), 'card-creator-'));
+  return fs.mkdtempSync(path.join(os.tmpdir(), 'ctcg-creator-'));
 }
 
 async function warteBisFertig(wc) {

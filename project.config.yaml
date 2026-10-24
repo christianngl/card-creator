@@ -2,7 +2,7 @@
 projekt:
   name: "cTCG Creator"
   name_lang: "Custom TCG Creator"
-  slug: card-creator
+  slug: ctcg-creator
   beschreibung: "Desktop-App zum Gestalten, Drucken und Verwalten eigener Sammel- und Spielkartensets"
   typ: allgemein
   struktur: standard

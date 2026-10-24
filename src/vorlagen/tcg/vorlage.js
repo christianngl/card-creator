@@ -62,7 +62,7 @@ function stilVon(quelle, ziel) {
 // Nicht mehr angebotene Effekte: alte Karten zeigen sie nicht mehr, beim nächsten Speichern fallen sie weg
 const ENTFERNTE_FOLIEN = ['strahlen'];
 
-// Feldbeschreibung für "card-creator vorlage zeigen" und die Oberfläche
+// Feldbeschreibung für "ctcg-creator vorlage zeigen" und die Oberfläche
 const FELDER = {
   alle: {
     layout: Object.keys(LAYOUTS).join(' | '),

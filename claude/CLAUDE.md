@@ -72,8 +72,8 @@ Regeln:
 - **Electron** (Node.js). Die Vorlage ist HTML/CSS. Vorschau, PNG (`capturePage`) und PDF (`printToPDF`) nutzen dieselbe Chromium-Engine, damit der Druck genau der Vorschau entspricht. Entscheidung und Alternativen stehen in `docs/entscheidungen.md`.
 - Start: `start.ps1` (Windows, installiert bei Bedarf die Abhängigkeiten) oder `npm start`. Tests: `npm test`.
 - Kartenformat: Das Set hat ein Standardformat (Start: **63 × 88 mm**, **3 mm Beschnitt**), jede Karte kann ein eigenes Höhe × Breite haben. Die Vorlage skaliert die Breite (Raster 690 px samt Beschnitt), zusätzliche oder fehlende Höhe nimmt das Fotofenster auf (CSS-Variable `--dh`). Zu breite oder zu schmale Formate meldet `pruefeFormat`. Bei sehr kleinen Formaten (z. B. 44 × 63 mm) rückt der Goldrahmen nahe an die Schnittkante. Ausgabe mit 300 dpi, z. B. 815 × 1110 px für 63 × 88 mm mit Beschnitt.
-- Updates: `src/app/update.js` fragt beim Start und über „Hilfe → Nach Updates suchen …“ das neueste GitHub-Release ab und spielt Installer bzw. portable EXE ein. Dafür müssen Releases die Dateien `cTCG-Creator-Setup-<version>.exe` und `cTCG-Creator-<version>-portable.exe` haben (`npm run dist`).
-- Name und Logo: kurz **cTCG Creator**, lang **Custom TCG Creator**. Logos liegen unter `assets/logo/` (Originale `*-original.png`, daraus mit `tools/logo.cs` die Fassungen für Kopfzeile, Startseite, Über-Dialog und `assets/app.ico`, Aufruf steht oben in der Datei). Farbschema der Oberfläche nach dem Logo (dunkel): Navy `#0b1222`, Cyan `#2fc4ee` als Akzent, Orange `#f07b22` → Gold `#f4c25f` für Hauptaktionen, als CSS-Variablen oben in `src/app/ui/app.css`. Repo, Paketname und Datenordner `%APPDATA%/card-creator` heißen weiter `card-creator`.
+- Updates: `src/app/update.js` fragt beim Start und über „Hilfe → Nach Updates suchen …“ das neueste GitHub-Release ab und spielt Installer bzw. portable EXE ein. Dafür müssen Releases die Dateien `cTCG-Creator-Setup-<version>.exe` und `cTCG-Creator-<version>-portable.exe` haben (`npm run dist`). Tag `v<version>`, `version` in `package.json` und Versionsnummer im Dateinamen müssen gleich sein, Dateien anderer Versionen ignoriert die Update-Suche. Deshalb vor jedem Release die Version in `package.json` erhöhen und neu bauen. `npm run dist` bricht ab, wenn es den Tag schon gibt.
+- Name und Logo: kurz **cTCG Creator**, lang **Custom TCG Creator**. Logos liegen unter `assets/logo/` (Originale `*-original.png`, daraus mit `tools/logo.cs` die Fassungen für Kopfzeile, Startseite, Über-Dialog und `assets/app.ico`, Aufruf steht oben in der Datei). Farbschema der Oberfläche nach dem Logo (dunkel): Navy `#0b1222`, Cyan `#2fc4ee` als Akzent, Orange `#f07b22` → Gold `#f4c25f` für Hauptaktionen, als CSS-Variablen oben in `src/app/ui/app.css`. Repo, Projektordner und Paketname heißen seit 2026-10-24 `ctcg-creator`. Nur der Datenordner `%APPDATA%/card-creator` und die `appId` `de.wildhunt.cardcreator` behalten den alten Namen, damit Liste der Sets und Installation beim Update erhalten bleiben.
 - Vorschaubilder für Startseite und Kartenübersicht liegen zwischengespeichert in `<Set-Ordner>/.vorschau/` und entstehen neu, sobald sich Karte, Set oder Vorlage ändern.
 - Aufbau des Codes:
 
@@ -247,7 +247,7 @@ Die Fälle 1–5 prüfen `npm test` automatisch (`tests/store.test.js`, `tests/c
 ## Projektstruktur
 
 ```text
-card-creator/
+ctcg-creator/
 ├─ CLAUDE.md
 ├─ README.md
 ├─ .gitignore

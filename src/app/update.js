@@ -5,8 +5,9 @@ const os = require('os');
 const path = require('path');
 const { spawn } = require('child_process');
 
-const REPO = 'christianngl/card-creator';
+const REPO = 'christianngl/ctcg-creator';
 const RELEASES = `https://github.com/${REPO}/releases`;
+const ALTE_EXE = '--alte-exe=';
 
 // "v0.2.10" → [0, 2, 10]; Zusätze wie "-beta" werden ignoriert
 function zerlege(version) {
@@ -24,15 +25,23 @@ function vergleiche(a, b) {
   return 0;
 }
 
-// Passende Datei des Releases: Installer für die installierte App, portable EXE für die portable
-function waehleDatei(assets, portabel) {
+// "cTCG-Creator-Setup-0.2.1.exe" → "0.2.1", null ohne Versionsnummer
+function dateiVersion(name) {
+  const m = /(\d+\.\d+\.\d+)/.exec(name);
+  return m ? m[1] : null;
+}
+
+// Passende Datei des Releases: Installer für die installierte App, portable EXE für die portable.
+// Die Versionsnummer im Dateinamen muss zur Version des Releases passen, sonst spielte ein Release
+// mit Dateien einer älteren Version immer wieder dieselbe alte Version ein.
+function waehleDatei(assets, portabel, version) {
   const muster = portabel ? /portable\.exe$/i : /setup.*\.exe$/i;
-  return (assets || []).find((a) => muster.test(a.name)) || null;
+  return (assets || []).find((a) => muster.test(a.name) && dateiVersion(a.name) && vergleiche(dateiVersion(a.name), version) === 0) || null;
 }
 
 async function neuestesRelease() {
   const antwort = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`, {
-    headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'card-creator' },
+    headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'ctcg-creator' },
     signal: AbortSignal.timeout(10000),
   });
   if (!antwort.ok) throw new Error(`GitHub antwortet mit ${antwort.status}.`);
@@ -41,7 +50,7 @@ async function neuestesRelease() {
 }
 
 async function lade(url, ziel, fortschritt) {
-  const antwort = await fetch(url, { headers: { 'User-Agent': 'card-creator' } });
+  const antwort = await fetch(url, { headers: { 'User-Agent': 'ctcg-creator' } });
   if (!antwort.ok) throw new Error(`Download fehlgeschlagen (${antwort.status}).`);
   const gesamt = Number(antwort.headers.get('content-length')) || 0;
   const teil = `${ziel}.part`;
@@ -63,15 +72,13 @@ async function lade(url, ziel, fortschritt) {
 }
 
 // Startet die neue Version und beendet diese. Installer: still, mit Neustart der App.
-// Portable: neue EXE neben die alte legen, starten und die alte entfernen, sobald sie frei ist.
+// Portable: neue EXE neben die alte legen und starten. Die alte löscht die neue selbst (entferneAlteExe),
+// ohne verstecktes PowerShell-Skript, das Virenscanner als verdächtig melden.
 function spieleEin(app, datei, portabel) {
   if (portabel) {
     const alt = process.env.PORTABLE_EXECUTABLE_FILE;
-    spawn(datei, [], { detached: true, stdio: 'ignore' }).unref();
-    if (alt && path.resolve(alt) !== path.resolve(datei)) {
-      const skript = `Start-Sleep 2; for ($i = 0; $i -lt 60; $i++) { try { Remove-Item -LiteralPath '${alt.replace(/'/g, "''")}' -ErrorAction Stop; break } catch { Start-Sleep 1 } }`;
-      spawn('powershell.exe', ['-NoProfile', '-WindowStyle', 'Hidden', '-Command', skript], { detached: true, stdio: 'ignore', windowsHide: true }).unref();
-    }
+    const args = alt && path.resolve(alt) !== path.resolve(datei) ? [ALTE_EXE + alt] : [];
+    spawn(datei, args, { detached: true, stdio: 'ignore' }).unref();
   } else {
     spawn(datei, ['/S', '--updated', '--force-run'], { detached: true, stdio: 'ignore' }).unref();
   }
@@ -94,10 +101,10 @@ async function suche({ app, dialog, shell, fenster, still = false }) {
     return;
   }
 
-  const datei = app.isPackaged ? waehleDatei(release.assets, portabel) : null;
+  const datei = app.isPackaged ? waehleDatei(release.assets, portabel, release.version) : null;
   const knoepfe = datei ? ['Jetzt aktualisieren', 'Release-Seite öffnen', 'Später'] : ['Release-Seite öffnen', 'Später'];
   const hinweis = app.isPackaged
-    ? (datei ? '\n\nDie App wird dafür beendet. Ungespeicherte Änderungen vorher speichern.' :'\n\nZu dieser Ausgabe gibt es keine passende Datei im Release.')
+    ? (datei ? '\n\nDie App wird dafür beendet. Ungespeicherte Änderungen vorher speichern.' :`\n\nIm Release fehlt die passende Datei für Version ${release.version}.`)
     : '\n\nDiese Ausgabe läuft aus dem Projektordner. Aktualisieren mit „git pull“.';
   const { response } = await dialog.showMessageBox(fenster, {
     type: 'info',
@@ -113,7 +120,7 @@ async function suche({ app, dialog, shell, fenster, still = false }) {
   if (wahl !== 'Jetzt aktualisieren') return;
 
   // Die portable EXE landet neben der alten, der Installer im Temp-Ordner
-  const ordner = portabel ? path.dirname(process.env.PORTABLE_EXECUTABLE_FILE) : fs.mkdtempSync(path.join(os.tmpdir(), 'card-creator-update-'));
+  const ordner = portabel ? path.dirname(process.env.PORTABLE_EXECUTABLE_FILE) : fs.mkdtempSync(path.join(os.tmpdir(), 'ctcg-creator-update-'));
   const ziel = path.join(ordner, datei.name);
   try {
     await lade(datei.browser_download_url, ziel, (anteil) => fenster.setProgressBar(anteil));
@@ -126,4 +133,25 @@ async function suche({ app, dialog, shell, fenster, still = false }) {
   spieleEin(app, ziel, portabel);
 }
 
-module.exports = { suche, vergleiche, waehleDatei, lade };
+// Nach dem Update der portablen EXE: die alte Datei löschen, sobald sie nicht mehr läuft.
+// Gelöscht wird nur eine portable EXE im selben Ordner wie die neue.
+function entferneAlteExe(argv) {
+  const neu = process.env.PORTABLE_EXECUTABLE_FILE;
+  const arg = argv.find((a) => a.startsWith(ALTE_EXE));
+  if (!neu || !arg) return;
+  const alt = path.resolve(arg.slice(ALTE_EXE.length));
+  if (alt === path.resolve(neu) || path.dirname(alt) !== path.dirname(path.resolve(neu)) || !/portable\.exe$/i.test(alt)) return;
+  let versuche = 0;
+  const timer = setInterval(() => {
+    versuche += 1;
+    try {
+      fs.rmSync(alt, { force: true });
+      clearInterval(timer);
+    } catch {
+      if (versuche >= 60) clearInterval(timer);
+    }
+  }, 1000);
+  timer.unref();
+}
+
+module.exports = { suche, vergleiche, waehleDatei, dateiVersion, entferneAlteExe, lade };

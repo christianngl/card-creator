@@ -156,6 +156,7 @@ function baueMenue() {
 app.whenReady().then(() => {
   baueMenue();
   oeffneFenster();
+  update.entferneAlteExe(process.argv);
   // Beim Start still nach Updates suchen: ohne Internet oder ohne neue Version erscheint nichts
   fenster.webContents.once('did-finish-load', () => sucheUpdates(true));
 });
