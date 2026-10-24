@@ -14,12 +14,12 @@ test('Versionen werden stellenweise verglichen', () => {
 
 test('Installer bzw. portable EXE wird aus dem Release gewählt', () => {
   const assets = [
-    { name: 'CardCreator-0.3.0-portable.exe' },
-    { name: 'CardCreator-Setup-0.3.0.exe' },
+    { name: 'cTCG-Creator-0.3.0-portable.exe' },
+    { name: 'cTCG-Creator-Setup-0.3.0.exe' },
     { name: 'latest.yml' },
   ];
-  assert.strictEqual(waehleDatei(assets, false).name, 'CardCreator-Setup-0.3.0.exe');
-  assert.strictEqual(waehleDatei(assets, true).name, 'CardCreator-0.3.0-portable.exe');
+  assert.strictEqual(waehleDatei(assets, false).name, 'cTCG-Creator-Setup-0.3.0.exe');
+  assert.strictEqual(waehleDatei(assets, true).name, 'cTCG-Creator-0.3.0-portable.exe');
   assert.strictEqual(waehleDatei([{ name: 'notizen.txt' }], false), null);
   assert.strictEqual(waehleDatei(undefined, true), null);
 });

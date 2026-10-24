@@ -1,4 +1,4 @@
-# Card Creator
+# cTCG Creator (Custom TCG Creator)
 
 Desktop-App zum Gestalten, Drucken und Verwalten eigener Sammel- und Spielkartensets für Familie, Freunde und die private Community.
 
@@ -20,8 +20,8 @@ Private Fotos und die daraus entstandenen Karten werden nie veröffentlicht. Sie
 
 Fertige Windows-Versionen stehen unter [Releases](https://github.com/christianngl/card-creator/releases):
 
-- `CardCreator-Setup-<version>.exe` – Installer mit Startmenü- und Desktop-Verknüpfung
-- `CardCreator-<version>-portable.exe` – ohne Installation, einfach starten
+- `cTCG-Creator-Setup-<version>.exe` – Installer mit Startmenü- und Desktop-Verknüpfung
+- `cTCG-Creator-<version>-portable.exe` – ohne Installation, einfach starten
 
 Die Dateien sind nicht signiert. Windows SmartScreen fragt deshalb beim ersten Start nach („Weitere Informationen“ → „Trotzdem ausführen“).
 

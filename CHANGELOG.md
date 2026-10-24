@@ -1,9 +1,10 @@
 # Changelog
 
-Alle für Nutzer spürbaren Änderungen an Card Creator.
+Alle für Nutzer spürbaren Änderungen an cTCG Creator (früher Card Creator).
 
 ## [Unveröffentlicht]
 
+- Card Creator heißt jetzt cTCG Creator (Custom TCG Creator): neues Logo und App-Icon, eine Startseite mit Logo und eine dunkle Oberfläche in den Farben des Logos. Alle Funktionen, Sets und die Liste der zuletzt geöffneten Sets bleiben erhalten. Die bisherige Desktop-Verknüpfung „Card Creator“ kann nach dem Update gelöscht werden.
 - Card Creator sucht beim Start auf GitHub nach einer neuen Version und kann sie auf Wunsch gleich herunterladen und einspielen (Installer und portable EXE). Manuell geht das über das neue Menü „Hilfe → Nach Updates suchen …“. Ohne Internet läuft die App wie gewohnt.
 
 ## [0.2.0] – 2026-10-23

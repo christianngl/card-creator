@@ -2,7 +2,7 @@
   "name": "card-creator",
   "version": "0.2.0",
   "private": true,
-  "description": "Desktop-App zum Gestalten, Drucken und Verwalten eigener Sammel- und Spielkartensets",
+  "description": "Custom TCG Creator – Desktop-App zum Gestalten, Drucken und Verwalten eigener Sammel- und Spielkartensets",
   "main": "src/app/main.js",
   "bin": {
     "card-creator": "src/cli/index.js"
@@ -23,7 +23,7 @@
   "author": "Christian Nagel",
   "build": {
     "appId": "de.wildhunt.cardcreator",
-    "productName": "Card Creator",
+    "productName": "cTCG Creator",
     "directories": {
       "output": "dist"
     },
@@ -59,11 +59,11 @@
       "allowToChangeInstallationDirectory": true,
       "perMachine": false,
       "createDesktopShortcut": true,
-      "shortcutName": "Card Creator",
-      "artifactName": "CardCreator-Setup-${version}.exe"
+      "shortcutName": "cTCG Creator",
+      "artifactName": "cTCG-Creator-Setup-${version}.exe"
     },
     "portable": {
-      "artifactName": "CardCreator-${version}-portable.exe"
+      "artifactName": "cTCG-Creator-${version}-portable.exe"
     }
   }
 }

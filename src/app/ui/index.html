@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self' file:; img-src 'self' file: data:; font-src file:; style-src 'self' 'unsafe-inline' file:; script-src 'self' 'unsafe-inline'; frame-src 'self' about:">
-<title>Card Creator</title>
+<title>cTCG Creator</title>
 <link rel="stylesheet" href="app.css">
 </head>
 <body>
 <header>
-  <h1 id="btnStart" title="Zur Startseite">Card Creator</h1>
+  <h1 id="btnStart" title="Zur Startseite"><img src="../../../assets/logo/ctcg-logo.png" alt=""><span>cTCG Creator</span></h1>
   <span id="setTitel"></span>
   <nav id="setAktionen" hidden>
     <button id="btnUebersicht">Übersicht</button>
@@ -21,6 +21,14 @@
 </header>
 
 <main id="start">
+  <section class="willkommen">
+    <img src="../../../assets/logo/ctcg-logo-text.png" alt="cTCG Creator">
+    <div>
+      <h2>Custom TCG Creator</h2>
+      <p>Eigene Sammel- und Spielkarten gestalten, drucken und verwalten.</p>
+    </div>
+  </section>
+  <h3 class="abschnitt">Deine Sets</h3>
   <div class="grid" id="setGrid"></div>
 </main>
 

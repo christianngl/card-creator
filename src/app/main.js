@@ -2,12 +2,17 @@
 const fs = require('fs');
 const path = require('path');
 const { pathToFileURL } = require('url');
-const { app, BrowserWindow, Menu, dialog, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, Menu, dialog, ipcMain, nativeImage, shell } = require('electron');
 const store = require('../core/store');
 const { karteSeite, rueckseiteSeite, kartenMasse } = require('../core/seite');
 const { vorlage } = require('../vorlagen');
 const { rendereKarten, druckePdf, vorschauBild } = require('../render/render');
 const update = require('./update');
+
+// Der Datenordner heißt weiter wie vor dem Umbenennen der App, damit die Liste der Sets erhalten bleibt
+app.setPath('userData', path.join(app.getPath('appData'), 'card-creator'));
+
+const LOGO = path.join(__dirname, '..', '..', 'assets', 'logo', 'ctcg-logo.png');
 
 // Liste aller bekannten Sets (angelegt oder geöffnet), zuletzt benutzte zuerst. Die Sets selbst liegen in ihren Ordnern.
 const ZULETZT = () => path.join(app.getPath('userData'), 'zuletzt.json');
@@ -107,7 +112,7 @@ function oeffneFenster() {
     height: 900,
     minWidth: 1000,
     minHeight: 640,
-    title: 'Card Creator',
+    title: 'cTCG Creator',
     icon: path.join(__dirname, '..', '..', 'assets', 'app.ico'),
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, sandbox: false },
   });
@@ -138,7 +143,12 @@ function baueMenue() {
     { label: 'Hilfe', submenu: [
       { label: 'Nach Updates suchen …', click: () => sucheUpdates(false) },
       { type: 'separator' },
-      { label: 'Über Card Creator', click: () => dialog.showMessageBox(fenster, { type: 'info', title: 'Über Card Creator', message: `Card Creator ${app.getVersion()}` }) },
+      { label: 'Über cTCG Creator', click: () => dialog.showMessageBox(fenster, {
+        title: 'Über cTCG Creator',
+        icon: nativeImage.createFromPath(LOGO).resize({ height: 96 }),
+        message: `Custom TCG Creator ${app.getVersion()}`,
+        detail: 'Eigene Sammel- und Spielkarten gestalten, drucken und verwalten.',
+      }) },
     ] },
   ]));
 }

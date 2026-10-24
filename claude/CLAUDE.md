@@ -1,4 +1,4 @@
-# Card Creator
+# cTCG Creator (Custom TCG Creator)
 
 > Desktop-App zum Gestalten, Drucken und Verwalten eigener Sammel- und Spielkartensets für den privaten Kreis. Claude-Instanzen können die App bedienen.
 
@@ -13,7 +13,7 @@
 
 ## Projektziel
 
-Mit Card Creator gestaltet man eigene Kartensets. Möglich sind reine Sammelkarten (Bild, Name, Beschreibung) und Spielkarten im TCG-Stil (Werte, Fähigkeiten, Seltenheit). Die Bilder sind eigene Fotos oder KI-generierte Bilder. Die App verwaltet Sets, Nummerierung, Seltenheiten, Vorlagen und Rahmen pro Set, Versionen einzelner Karten und eine Sammlungsübersicht („besitze ich“, „gedruckt“). Ausgegeben werden einzelne PNG-Dateien pro Karte und druckfertige PDF-Bögen für einen Druckdienst.
+Mit cTCG Creator (Custom TCG Creator, bis Oktober 2026 „Card Creator“) gestaltet man eigene Kartensets. Möglich sind reine Sammelkarten (Bild, Name, Beschreibung) und Spielkarten im TCG-Stil (Werte, Fähigkeiten, Seltenheit). Die Bilder sind eigene Fotos oder KI-generierte Bilder. Die App verwaltet Sets, Nummerierung, Seltenheiten, Vorlagen und Rahmen pro Set, Versionen einzelner Karten und eine Sammlungsübersicht („besitze ich“, „gedruckt“). Ausgegeben werden einzelne PNG-Dateien pro Karte und druckfertige PDF-Bögen für einen Druckdienst.
 
 Claude entwickelt die Software, entwirft aber keine Karteninhalte. Damit Claude-Instanzen die App zum Erstellen von Karten bedienen können, bekommt sie eine Schnittstelle für Claude.
 
@@ -32,7 +32,7 @@ Erfolg heißt: Ein Set lässt sich vollständig in der App anlegen und als Druck
 Der folgende Prompt gilt, wenn Claude Code Karten erstellt (statt am Code zu arbeiten):
 
 ```text
-Du bedienst die Desktop-App "Card Creator" über ihre Kommandozeile:
+Du bedienst die Desktop-App "cTCG Creator" (Custom TCG Creator) über ihre Kommandozeile:
   node src/cli/index.js <befehl> …   (Übersicht: node src/cli/index.js hilfe)
 Deine Aufgabe: Sammel- und Spielkarten genau nach den Vorgaben des Nutzers anlegen, bearbeiten,
 rendern und für den Druck exportieren.
@@ -72,7 +72,8 @@ Regeln:
 - **Electron** (Node.js). Die Vorlage ist HTML/CSS. Vorschau, PNG (`capturePage`) und PDF (`printToPDF`) nutzen dieselbe Chromium-Engine, damit der Druck genau der Vorschau entspricht. Entscheidung und Alternativen stehen in `docs/entscheidungen.md`.
 - Start: `start.ps1` (Windows, installiert bei Bedarf die Abhängigkeiten) oder `npm start`. Tests: `npm test`.
 - Kartenformat: Das Set hat ein Standardformat (Start: **63 × 88 mm**, **3 mm Beschnitt**), jede Karte kann ein eigenes Höhe × Breite haben. Die Vorlage skaliert die Breite (Raster 690 px samt Beschnitt), zusätzliche oder fehlende Höhe nimmt das Fotofenster auf (CSS-Variable `--dh`). Zu breite oder zu schmale Formate meldet `pruefeFormat`. Bei sehr kleinen Formaten (z. B. 44 × 63 mm) rückt der Goldrahmen nahe an die Schnittkante. Ausgabe mit 300 dpi, z. B. 815 × 1110 px für 63 × 88 mm mit Beschnitt.
-- Updates: `src/app/update.js` fragt beim Start und über „Hilfe → Nach Updates suchen …“ das neueste GitHub-Release ab und spielt Installer bzw. portable EXE ein. Dafür müssen Releases die Dateien `CardCreator-Setup-<version>.exe` und `CardCreator-<version>-portable.exe` haben (`npm run dist`).
+- Updates: `src/app/update.js` fragt beim Start und über „Hilfe → Nach Updates suchen …“ das neueste GitHub-Release ab und spielt Installer bzw. portable EXE ein. Dafür müssen Releases die Dateien `cTCG-Creator-Setup-<version>.exe` und `cTCG-Creator-<version>-portable.exe` haben (`npm run dist`).
+- Name und Logo: kurz **cTCG Creator**, lang **Custom TCG Creator**. Logos liegen unter `assets/logo/` (Originale `*-original.png`, daraus mit `tools/logo.cs` die Fassungen für Kopfzeile, Startseite, Über-Dialog und `assets/app.ico`, Aufruf steht oben in der Datei). Farbschema der Oberfläche nach dem Logo (dunkel): Navy `#0b1222`, Cyan `#2fc4ee` als Akzent, Orange `#f07b22` → Gold `#f4c25f` für Hauptaktionen, als CSS-Variablen oben in `src/app/ui/app.css`. Repo, Paketname und Datenordner `%APPDATA%/card-creator` heißen weiter `card-creator`.
 - Vorschaubilder für Startseite und Kartenübersicht liegen zwischengespeichert in `<Set-Ordner>/.vorschau/` und entstehen neu, sobald sich Karte, Set oder Vorlage ändern.
 - Aufbau des Codes:
 
@@ -254,7 +255,8 @@ card-creator/
 ├─ projekt.ini
 ├─ package.json
 ├─ start.ps1
-├─ assets/app.ico
+├─ assets/app.ico, assets/logo/
+├─ tools/       Logo und Icon erzeugen
 ├─ claude/
 │  └─ CLAUDE.md
 ├─ src/

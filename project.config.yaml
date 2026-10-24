@@ -1,6 +1,7 @@
 # Projekt-Metadaten – maschinenlesbar, z. B. für Übersichten oder Automatisierung
 projekt:
-  name: "Card Creator"
+  name: "cTCG Creator"
+  name_lang: "Custom TCG Creator"
   slug: card-creator
   beschreibung: "Desktop-App zum Gestalten, Drucken und Verwalten eigener Sammel- und Spielkartensets"
   typ: allgemein

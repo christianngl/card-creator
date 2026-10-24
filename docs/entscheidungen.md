@@ -54,5 +54,12 @@
 
 - Die App fragt beim Start still und über „Hilfe → Nach Updates suchen …“ bei `api.github.com` nach dem neuesten Release (`src/app/update.js`). Gesendet wird nur diese Anfrage, keine Karten- oder Set-Daten. Ohne Internet passiert beim Start nichts, die App bleibt offline nutzbar.
 - Ist das Release neuer als `app.getVersion()`, zeigt ein Dialog die Release-Notizen. „Jetzt aktualisieren“ lädt den Installer und startet ihn still (`/S --updated --force-run`), die App startet danach neu. Die portable EXE lädt die neue portable EXE in ihren Ordner, startet sie und entfernt die alte. Aus dem Projektordner gestartet (`start.ps1`) wird nur auf `git pull` hingewiesen.
-- Kein electron-updater: Er braucht `latest.yml` im Release und kann portable EXEs nicht aktualisieren. Die Erkennung läuft über die Dateinamen `CardCreator-Setup-<version>.exe` und `CardCreator-<version>-portable.exe`. Das Repo muss dafür öffentlich bleiben, sonst antwortet die API ohne Anmeldung mit 404.
+- Kein electron-updater: Er braucht `latest.yml` im Release und kann portable EXEs nicht aktualisieren. Die Erkennung läuft über die Dateinamen (`…Setup…exe` bzw. `…portable.exe`, seit dem Rebranding `cTCG-Creator-Setup-<version>.exe` und `cTCG-Creator-<version>-portable.exe`). Das Repo muss dafür öffentlich bleiben, sonst antwortet die API ohne Anmeldung mit 404.
 - Das Fenster hat dafür wieder eine sichtbare Menüleiste (Datei, Bearbeiten, Ansicht, Hilfe).
+
+## 2026-10-24 – Rebranding zu cTCG Creator
+
+- Neuer Name: kurz „cTCG Creator“, lang „Custom TCG Creator“. Logos von Christian (Bildlogo und Logo mit Schriftzug) liegen als Originale unter `assets/logo/`, `tools/logo.cs` schneidet sie zu und erzeugt die Fassungen für die App und das Icon.
+- Kopfzeile: Bildlogo mit dem Namen als Text, weil der Schriftzug des kombinierten Logos in 38 px Höhe nicht lesbar ist. Die Startseite zeigt das kombinierte Logo groß.
+- Dunkles Farbschema nach dem Logo: Navy des Schilds als Grund, Cyan der Leiterbahnen für Fokus und Hervorhebungen, der Orange-Gold-Verlauf des Schriftzugs für Hauptaktionen. Die Kartenvorschau bleibt unverändert, weil sie dem Druck entspricht.
+- Unverändert bleiben Repo, Paketname, `appId` und der Datenordner `%APPDATA%/card-creator` (in `main.js` fest gesetzt, damit die Liste der Sets erhalten bleibt, auch wenn Electron den Ordner sonst nach dem Produktnamen benennt). Die Release-Dateien heißen neu `cTCG-Creator-…`. Bisher gab es kein Release mit Update-Suche, deshalb muss keine ältere Version die alten Namen finden.

@@ -90,7 +90,7 @@ async function suche({ app, dialog, shell, fenster, still = false }) {
   }
   const aktuell = app.getVersion();
   if (vergleiche(release.version, aktuell) <= 0) {
-    if (!still) dialog.showMessageBox(fenster, { type: 'info', title: 'Nach Updates suchen', message: `Card Creator ${aktuell} ist aktuell.` });
+    if (!still) dialog.showMessageBox(fenster, { type: 'info', title: 'Nach Updates suchen', message: `cTCG Creator ${aktuell} ist aktuell.` });
     return;
   }
 
@@ -102,7 +102,7 @@ async function suche({ app, dialog, shell, fenster, still = false }) {
   const { response } = await dialog.showMessageBox(fenster, {
     type: 'info',
     title: 'Update verfügbar',
-    message: `Card Creator ${release.version} ist verfügbar (installiert: ${aktuell}).`,
+    message: `cTCG Creator ${release.version} ist verfügbar (installiert: ${aktuell}).`,
     detail: (release.notizen.trim() || 'Keine Änderungsliste.') + hinweis,
     buttons: knoepfe,
     defaultId: 0,

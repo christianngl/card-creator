@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Kommandozeile für Card Creator. Gedacht für Claude Code: jede Ausgabe ist JSON auf stdout.
+// Kommandozeile für cTCG Creator (Custom TCG Creator). Gedacht für Claude Code: jede Ausgabe ist JSON auf stdout.
 // Exit-Codes: 0 = ok, 1 = Fehler, 2 = Angaben fehlen (offene_punkte nennen, was nachzufragen ist).
 const fs = require('fs');
 const path = require('path');
@@ -7,7 +7,7 @@ const { spawn } = require('child_process');
 const store = require('../core/store');
 const { VORLAGEN, vorlage } = require('../vorlagen');
 
-const HILFE = `Card Creator – Kommandozeile (Ausgabe immer JSON)
+const HILFE = `cTCG Creator – Kommandozeile (Ausgabe immer JSON)
 
   node src/cli/index.js <befehl> [optionen]
 
