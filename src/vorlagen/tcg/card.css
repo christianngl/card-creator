@@ -121,6 +121,15 @@
 .sammel.regenbogenkarte .panel{background:linear-gradient(160deg,#ffe3e3,#fff2cc 25%,#e0fbe0 50%,#dcefff 75%,#f1e2ff)}
 .sammel.regenbogenkarte .beschr{border-color:#be82ff}
 
+/* Energiekarte: Vollbild-Aufbau, Name oben, große Energie-Symbole unten (1–5) */
+.energiekarte .name{top:110px;width:530px}
+.energien{left:80px;top:calc(620px + var(--dh,0px));width:530px;height:170px;display:flex;align-items:center;justify-content:center;gap:18px}
+.energien .e{width:150px;height:150px;font-size:84px;border-width:8px;box-shadow:0 4px 14px rgba(0,0,0,.55)}
+.energien.n2 .e{width:140px;height:140px;font-size:78px}
+.energien.n3 .e{width:130px;height:130px;font-size:72px}
+.energien.n4 .e{width:112px;height:112px;font-size:62px;border-width:6px}
+.energien.n5 .e{width:92px;height:92px;font-size:50px;border-width:5px}
+
 /* Folien-Effekte (Feld "folie"): im Bild oder über der ganzen Karte */
 .fx{position:absolute;inset:0;pointer-events:none;z-index:1;overflow:hidden}
 .fx svg{position:absolute;inset:0;width:100%;height:100%}

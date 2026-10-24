@@ -265,6 +265,21 @@ test('Regenbogenkarte mit Fotofenster oben: Band und Glanz über Foto und Karten
   assert.equal(store.ladeKarte(ordner, 2).layout, 'regenbogen-normal');
 });
 
+test('Energiekarte: Vollbild mit so vielen Energie-Symbolen wie angegeben, Typ ist Pflicht', () => {
+  const { ordner, bild } = neuesSet();
+  const energie = (extra) => ({ layout: 'energie', name: 'Feuer-Energie', bild: { datei: bild }, bildquelle: 'ki', seltenheit: 'häufig', typ: 'Feuer', ...extra });
+  const k = store.neueKarte(ordner, energie({ energien: 3 }));
+  const html = karteSeite(store.ladeSet(ordner), k);
+  assert.match(html, /class="card full energiekarte/);
+  assert.equal((html.match(/<span class="e feuer">/g) || []).length, 3);
+  assert.doesNotMatch(html, /class="atks"/);
+  // ohne Anzahl ein Symbol
+  const eins = karteSeite(store.ladeSet(ordner), store.neueKarte(ordner, energie()));
+  assert.equal((eins.match(/<span class="e feuer">/g) || []).length, 1);
+  assert.throws(() => store.neueKarte(ordner, energie({ typ: undefined })), (e) => e.offene_punkte.includes('typ'));
+  assert.throws(() => store.neueKarte(ordner, energie({ energien: 6 })), (e) => e.offene_punkte.includes('energien: Zahl 1 bis 5'));
+});
+
 test('Effekt Strahlen gibt es nicht mehr, alte Karten verlieren ihn beim Speichern', () => {
   const { ordner, bild } = neuesSet();
   const { vorlage } = require('../src/vorlagen');

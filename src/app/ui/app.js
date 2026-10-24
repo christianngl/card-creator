@@ -370,11 +370,14 @@ function neueKarte() {
   zeigeEditor();
   baueFormular();
   ladeListe();
+  // Formular wieder von oben zeigen, sonst steht man nach dem Scrollen mitten in der neuen Karte
+  $('#editor').scrollTop = 0;
 }
 
 async function waehleKarte(nr, version) {
   try {
     const r = await rufe('karte:laden', zustand.info.set.ordner, nr, version);
+    const andereKarte = nr !== zustand.nr;
     zustand.nr = nr;
     zustand.karte = r.karte;
     const aktuell = r.versionen[r.versionen.length - 1];
@@ -393,6 +396,7 @@ async function waehleKarte(nr, version) {
     else if (r.karte.entwurf) meldung('fehler', 'Entwurf – es fehlen noch Angaben:', r.karte.offene_punkte || []);
     baueFormular();
     ladeListe();
+    if (andereKarte) $('#editor').scrollTop = 0;
   } catch (e) { fehler(e); }
 }
 
@@ -582,6 +586,8 @@ function baueFormular() {
   } else if (k.layout === 'trainer') {
     teile.push(feld('untertyp', 'Untertyp', { hinweis: 'z. B. UNTERSTÜTZER' }), feld('effekt', 'Effekt', { typ: 'textarea', ganz: true }),
       feld('regel', 'Regeltext', { typ: 'textarea', ganz: true }));
+  } else if (aufbauVon(k.layout) === 'energie') {
+    teile.push(auswahl('typ', 'Energie (Typ)', typen, { leer: true }), feld('energien', 'Anzahl Energie-Symbole (1–5)', { typ: 'number', hinweis: '1' }));
   } else if (aufbauVon(k.layout) === 'sammel') {
     teile.push(auswahl('typ', 'Typ (Farbe)', typen, { leer: true }), feld('beschreibung', 'Beschreibung', { typ: 'textarea', ganz: true }));
   }

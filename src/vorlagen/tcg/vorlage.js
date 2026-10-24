@@ -34,6 +34,7 @@ const LAYOUTS = {
   regenbogen: { titel: 'Regenbogenkarte (Vollbild mit Regenbogenglanz)', kartentyp: 'spielkarte', aufbau: 'spiel' },
   'regenbogen-normal': { titel: 'Regenbogenkarte (Fotofenster oben, Regenbogenglanz)', kartentyp: 'spielkarte', aufbau: 'spiel' },
   trainer: { titel: 'Trainer (Effektkarte)', kartentyp: 'spielkarte', aufbau: 'trainer' },
+  energie: { titel: 'Energiekarte (Vollbild mit Energie-Symbolen)', kartentyp: 'spielkarte', aufbau: 'energie' },
   sammel: { titel: 'Sammelkarte (Bild, Name, Beschreibung)', kartentyp: 'sammelkarte', aufbau: 'sammel' },
   'sammel-regenbogen': { titel: 'Regenbogen-Sammelkarte (mit Regenbogenglanz)', kartentyp: 'sammelkarte', aufbau: 'sammel' },
 };
@@ -97,6 +98,10 @@ const FELDER = {
     untertyp: 'Text, z. B. UNTERSTÜTZER, optional',
     effekt: 'Text (Pflicht)',
     regel: 'Text, optional',
+  },
+  energie: {
+    typ: 'Name eines Typs des Sets (Pflicht), bestimmt Symbol und Farbe',
+    energien: 'Zahl 1–5, wie viele Energie-Symbole die Karte zeigt (Standard 1)',
   },
   sammel: {
     typ: 'Name eines Typs des Sets, optional (färbt die Karte)',
@@ -179,6 +184,10 @@ function pruefe(set, karte) {
     });
   }
   if (karte.layout === 'trainer' && leer(karte.effekt)) offen.push('effekt');
+  if (aufbau(karte.layout) === 'energie') {
+    if (leer(karte.typ)) offen.push('typ');
+    if (!leer(karte.energien) && !(Number.isInteger(Number(karte.energien)) && karte.energien >= 1 && karte.energien <= 5)) offen.push('energien: Zahl 1 bis 5');
+  }
   return offen;
 }
 
@@ -283,7 +292,7 @@ function name(karte, extraStil = '') {
 // Liefert das Markup einer Karte (ein .card-Element). bildUrl wandelt einen Bildpfad des Sets in eine URL um.
 function karteHtml(set, karte, { bildUrl, gesamt }) {
   const typ = typVon(set, karte.typ);
-  const klassen = ['card', { normal: 'normal', vollbild: 'full', gold: 'full goldkarte', regenbogen: 'full regenbogenkarte', 'regenbogen-normal': 'normal regenbogenkarte', trainer: 'trainer', sammel: 'sammel', 'sammel-regenbogen': 'sammel regenbogenkarte' }[karte.layout] || 'normal'];
+  const klassen = ['card', { normal: 'normal', vollbild: 'full', gold: 'full goldkarte', regenbogen: 'full regenbogenkarte', 'regenbogen-normal': 'normal regenbogenkarte', energie: 'full energiekarte', trainer: 'trainer', sammel: 'sammel', 'sammel-regenbogen': 'sammel regenbogenkarte' }[karte.layout] || 'normal'];
   if (typ) klassen.push(`ty-${slug(typ.name)}`);
   if (karte.holo) klassen.push('holo');
   const teile = ['<div class="gold"></div>'];
@@ -292,7 +301,7 @@ function karteHtml(set, karte, { bildUrl, gesamt }) {
   // Regenbogenkarten haben den Regenbogenglanz fest über dem Foto, ein Folien-Effekt kommt bei Bedarf dazu
   const glanz = ['regenbogen', 'regenbogen-normal', 'sammel-regenbogen'].includes(karte.layout) ? '<div class="regenbogenglanz"></div>' : '';
 
-  if (['vollbild', 'gold', 'regenbogen'].includes(karte.layout)) {
+  if (['vollbild', 'gold', 'regenbogen', 'energie'].includes(karte.layout)) {
     const goldton = karte.layout === 'gold' && karte.goldton !== false ? ' goldton' : '';
     teile.push(`<div class="panel">${foto(karte, bildUrl, goldton)}${glanz}${folieImBild}<div class="shade"></div></div>`);
   } else {
@@ -307,6 +316,13 @@ function karteHtml(set, karte, { bildUrl, gesamt }) {
     teile.push(name(karte));
     teile.push(`<div class="effect">${absatz(karte.effekt)}</div>`);
     if (karte.regel) teile.push(`<div class="rule">${absatz(karte.regel)}</div>`);
+  } else if (aufbau(karte.layout) === 'energie') {
+    // Große Energie-Symbole in der Farbe des Typs, Anzahl aus "energien"
+    teile.push('<div class="tpill">ENERGIE</div>');
+    teile.push(name(karte));
+    const n = Math.max(1, Math.min(5, Number(karte.energien) || 1));
+    const symbol = typ ? `<span class="e ${slug(typ.name)}">${esc(typ.symbol)}</span>` : '';
+    teile.push(`<div class="energien n${n}">${symbol.repeat(n)}</div>`);
   } else if (aufbau(karte.layout) === 'sammel') {
     teile.push(name(karte));
     if (karte.beschreibung) teile.push(`<div class="beschr">${absatz(karte.beschreibung)}</div>`);

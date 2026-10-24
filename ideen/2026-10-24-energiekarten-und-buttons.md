@@ -1,10 +1,10 @@
 ---
 titel: Energiekarten und Buttons
-status: offen
+status: erledigt
 erstellt: 2026-10-24
 uhrzeit: 11:07
 issue: 13
-abgeglichen: offen
+abgeglichen: erledigt
 ---
 
 Hallo,
